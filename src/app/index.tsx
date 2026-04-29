@@ -10,7 +10,7 @@ import { MapRenderer } from '../components/MapRenderer';
 const { width } = Dimensions.get('window');
 
 export default function App() {
-  const { state, searchLocation, useItem, travel, craftItem } = useGameState();
+  const { state, searchLocation, useItem, travel, craftItem, resetGame } = useGameState();
   const [currentView, setCurrentView] = useState<'location' | 'world' | 'inventory' | 'crafting'>('location');
   const insets = useSafeAreaInsets();
 
@@ -23,10 +23,7 @@ export default function App() {
         <Text style={styles.deathText}>Survived for {state.day} days.</Text>
         <TouchableOpacity 
           style={styles.deathButton}
-          onPress={() => {
-            // Note: In a real app, you'd reset the state instead of reloading
-            // But since useGameState doesn't export a reset, we'll leave this for now.
-          }}
+          onPress={resetGame}
         >
           <Text style={styles.deathButtonText}>RISE AGAIN</Text>
         </TouchableOpacity>

@@ -273,5 +273,9 @@ export const useGameState = () => {
     });
   }, [addLog]);
 
-  return { state, searchLocation, useItem, travel, rest, craftItem };
+  const resetGame = useCallback(() => {
+    setState(INITIAL_STATE);
+  }, []);
+
+  return { state, searchLocation, useItem, travel, rest, craftItem, resetGame };
 };
