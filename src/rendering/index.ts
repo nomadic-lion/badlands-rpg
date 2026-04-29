@@ -50,10 +50,18 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     function resizeCanvas() {
       canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
       canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
-      ctx.imageSmoothingEnabled = false;
+      if (ctx) ctx.imageSmoothingEnabled = false;
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'error', 
+        message: msg + ' at ' + lineNo + ':' + columnNo
+      }));
+      return false;
+    };
 
     // --- Inject rendering modules ---
     ${ENGINE_JS}
@@ -65,16 +73,16 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     ${POSTPROCESS_JS}
 
     // --- GAME STATE ---
-    const location = ${locationJSON};
+    const gameLoc = ${locationJSON};
     const hour = ${hour};
-    const rng = initPRNG(location);
-    const env = generateGrid(location, rng);
+    const rng = initPRNG(gameLoc);
+    const env = generateGrid(gameLoc, rng);
     env.isNight = hour < 6 || hour > 19;
     env.isDusk = hour === 6 || hour === 19 || hour === 18;
-    env.locationId = location.id;
+    env.locationId = gameLoc.id;
 
     // Re-seed for buildings (after grid consumed some randomness)
-    const bldRng = initPRNG(location);
+    const bldRng = initPRNG(gameLoc);
     // consume same amount to stay deterministic
     for (let i = 0; i < 50; i++) bldRng.rand();
 
@@ -242,7 +250,7 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
         }
       }
 
-      renderLandmarks(ctx, location, env, rng);
+      renderLandmarks(ctx, gameLoc, env, rng);
       renderPostProcess(ctx, env);
       drawPlayer(ctx);
 

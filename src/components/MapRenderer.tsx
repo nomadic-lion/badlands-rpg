@@ -17,7 +17,9 @@ export function MapRenderer({ location, hour, onLandmarkTapped, onEnterLandmark 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'landmarkTapped' && onLandmarkTapped) {
+      if (data.type === 'error') {
+        console.error('WebView Error:', data.message);
+      } else if (data.type === 'landmarkTapped' && onLandmarkTapped) {
         onLandmarkTapped(data.id, data.name);
       } else if (data.type === 'enterLandmark' && onEnterLandmark) {
         onEnterLandmark(data.id, data.name);
