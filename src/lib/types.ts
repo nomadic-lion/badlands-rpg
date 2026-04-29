@@ -33,6 +33,17 @@ export interface SubLocation {
   risk: number; // chance of encounter
 }
 
+export type LandmarkType = 'drug_lab' | 'cartel_ranch' | 'casino' | 'gang_hq' | 'rooster_pit';
+
+export interface LandmarkBuilding {
+  id: string;
+  name: string;
+  description: string;
+  type: LandmarkType;
+  gridX: number;
+  gridY: number;
+}
+
 export interface GameLocation {
   id: string;
   name: string;
@@ -40,6 +51,7 @@ export interface GameLocation {
   y: number;
   type: 'ruins' | 'cartel_base' | 'safezone' | 'gas_station' | 'rural_mountains' | 'rural_forest' | 'city_la' | 'city_vegas';
   subLocations: SubLocation[];
+  landmarks?: LandmarkBuilding[];
 }
 
 export interface LogEntry {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, StatusBar } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, StatusBar, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameState } from '../hooks/useGameState';
 import { Backpack, Map, Search, Footprints, ShieldAlert, Drumstick, Droplets, Hammer, Skull, Crosshair } from 'lucide-react-native';
@@ -13,6 +13,14 @@ export default function App() {
   const { state, searchLocation, useItem, travel, craftItem, resetGame } = useGameState();
   const [currentView, setCurrentView] = useState<'location' | 'world' | 'inventory' | 'crafting'>('location');
   const insets = useSafeAreaInsets();
+
+  const handleLandmarkTapped = useCallback((id: string, name: string) => {
+    // Landmark tapped — tooltip shown in WebView canvas
+  }, []);
+
+  const handleEnterLandmark = useCallback((id: string, name: string) => {
+    Alert.alert(name, 'Interior exploration coming soon. This area is under cartel control.', [{ text: 'Back Away' }]);
+  }, []);
 
   if (state.stats.health <= 0) {
     return (
@@ -47,7 +55,12 @@ export default function App() {
           <View style={styles.viewContainer}>
             {/* Map Section */}
             <View style={styles.mapSection}>
-              <MapRenderer location={currentLocation} hour={state.hour} />
+              <MapRenderer 
+                location={currentLocation} 
+                hour={state.hour}
+                onLandmarkTapped={handleLandmarkTapped}
+                onEnterLandmark={handleEnterLandmark}
+              />
               <View style={styles.mapOverlayInfo}>
                 <Text style={styles.mapOverlayLabel}>CURRENT LOCATION</Text>
                 <Text style={styles.mapOverlayTitle}>{currentLocation?.name}</Text>

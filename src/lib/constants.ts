@@ -119,6 +119,10 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
       createSubLocation('sin_camp', 'Hidden Cartel Camp', 'police'),
       createSubLocation('sin_shack', 'Abandoned Processing Shack', 'commercial'),
       createSubLocation('sin_mine', 'Old Mine Entrance', 'residential')
+    ],
+    landmarks: [
+      { id: 'lm_cartel_ranch', name: 'El Patrón\'s Ranch', description: 'A fortified hacienda compound. Armed guards patrol the walls.', type: 'cartel_ranch', gridX: 12, gridY: 10 },
+      { id: 'lm_rooster_pit_sin', name: 'La Arena de Gallos', description: 'Underground rooster fighting ring. Bets and blood.', type: 'rooster_pit', gridX: 38, gridY: 28 }
     ]
   },
   {
@@ -130,6 +134,10 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
       createSubLocation('mich_farm', 'Avocado Farm Ruins', 'residential'),
       createSubLocation('mich_lab', 'Concealed Lab', 'medical'),
       createSubLocation('mich_road', 'Logging Road Checkpoint', 'police')
+    ],
+    landmarks: [
+      { id: 'lm_drug_lab', name: 'Laboratorio Clandestino', description: 'Hidden drug laboratory deep in the sierra. Toxic fumes seep from the vents.', type: 'drug_lab', gridX: 14, gridY: 12 },
+      { id: 'lm_rooster_pit_mich', name: 'Palenque del Pueblo', description: 'A rustic cockfighting arena. The crowd roars at night.', type: 'rooster_pit', gridX: 40, gridY: 30 }
     ]
   },
   {
@@ -141,6 +149,9 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
       createSubLocation('la_tent', 'Sprawling Tent City', 'residential'),
       createSubLocation('la_liquor', 'Looted Liquor Store', 'commercial'),
       createSubLocation('la_precinct', 'LAPD Precinct', 'police')
+    ],
+    landmarks: [
+      { id: 'lm_gang_hq', name: 'East Side Warehouse', description: 'Fortified gang headquarters. Graffiti-covered walls and armed sentries.', type: 'gang_hq', gridX: 16, gridY: 14 }
     ]
   },
   {
@@ -162,6 +173,9 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
       createSubLocation('lv_bellagio', 'Flooded Casino Resort', 'commercial'),
       createSubLocation('lv_pawn', 'Pawn Shop Vault', 'commercial'),
       createSubLocation('lv_swat', 'LVMPD SWAT Truck', 'police')
+    ],
+    landmarks: [
+      { id: 'lm_casino', name: 'Casino Royale', description: 'A towering golden casino. Neon lights still flicker in the wasteland night.', type: 'casino', gridX: 20, gridY: 10 }
     ]
   }
 ];
