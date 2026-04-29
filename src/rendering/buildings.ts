@@ -20,6 +20,8 @@ function generateBuildings(env, rng) {
   const buildingChance = isRural ? 0.05 : (isVegas || isLA ? 0.85 : 0.6);
   const natureChance = isForest ? 0.5 : (isMountains ? 0.35 : (isLA ? 0.04 : 0.02));
 
+  const landmarks = env.location.landmarks || [];
+
   for (let by = 2; by < rows - 4; by++) {
     for (let bx = 2; bx < cols - 4; bx++) {
       let free = true;
@@ -29,6 +31,13 @@ function generateBuildings(env, rng) {
       if (isLA) { w = randInt(3, 7); d = randInt(4, 7); }
       else if (isVegas) { w = randInt(5, 10); d = randInt(5, 9); }
       if (bx + w >= cols || by + d >= rows) continue;
+
+      // Check if it overlaps with any landmark (give a 2-tile buffer around landmarks)
+      for (const lm of landmarks) {
+        if (bx + w > lm.gridX - 2 && bx < lm.gridX + 12 && by + d > lm.gridY - 2 && by < lm.gridY + 12) {
+          free = false;
+        }
+      }
 
       for (let i = -1; i <= w; i++) {
         for (let j = -1; j <= d; j++) {

@@ -11,22 +11,21 @@ export const LANDMARKS_JS = `
 // Stored landmark hit areas for click detection
 const landmarkHitAreas = [];
 
-function renderLandmarks(ctx, location, env, rng) {
-  const { rand, randInt, randChoice } = rng;
+function renderSingleLandmark(ctx, lm, env, rng) {
   const isNight = env.isNight;
-  landmarkHitAreas.length = 0;
-
-  const landmarks = (location.landmarks || []);
-  for (const lm of landmarks) {
-    const px = lm.gridX * TILE;
-    const py = lm.gridY * TILE;
-    switch (lm.type) {
-      case 'drug_lab': drawDrugLab(ctx, px, py, isNight, rng); break;
-      case 'cartel_ranch': drawCartelRanch(ctx, px, py, isNight, rng); break;
-      case 'casino': drawCasino(ctx, px, py, isNight, rng); break;
-      case 'gang_hq': drawGangHQ(ctx, px, py, isNight, rng); break;
-      case 'rooster_pit': drawRoosterPit(ctx, px, py, isNight, rng); break;
-    }
+  const px = lm.gridX * TILE;
+  const py = lm.gridY * TILE;
+  
+  switch (lm.type) {
+    case 'drug_lab': drawDrugLab(ctx, px, py, isNight, rng); break;
+    case 'cartel_ranch': drawCartelRanch(ctx, px, py, isNight, rng); break;
+    case 'casino': drawCasino(ctx, px, py, isNight, rng); break;
+    case 'gang_hq': drawGangHQ(ctx, px, py, isNight, rng); break;
+    case 'rooster_pit': drawRoosterPit(ctx, px, py, isNight, rng); break;
+  }
+  
+  // Add to hit areas if not already there
+  if (!landmarkHitAreas.find(h => h.id === lm.id)) {
     landmarkHitAreas.push({ id: lm.id, name: lm.name, desc: lm.description, x: px, y: py - 80, w: 240, h: 200 });
   }
 }

@@ -80,6 +80,7 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     env.isNight = hour < 6 || hour > 19;
     env.isDusk = hour === 6 || hour === 19 || hour === 18;
     env.locationId = gameLoc.id;
+    env.location = gameLoc; // Needed for generateBuildings to check landmarks
 
     // Re-seed for buildings (after grid consumed some randomness)
     const bldRng = initPRNG(gameLoc);
@@ -92,7 +93,46 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     const entities = [];
     buildings.forEach(b => entities.push({ yBottom: b.y + b.d, type: 'building', obj: b }));
     nature.forEach(n => entities.push({ yBottom: n.y + 2, type: 'nature', obj: n }));
+    
+    // Add landmarks to entities for proper depth sorting
+    const landmarks = (gameLoc.landmarks || []);
+    for (const lm of landmarks) {
+       let d = 6; 
+       if (lm.type === 'drug_lab') d = 6;
+       else if (lm.type === 'cartel_ranch') d = 8;
+       else if (lm.type === 'casino') d = 10;
+       else if (lm.type === 'gang_hq') d = 7;
+       else if (lm.type === 'rooster_pit') d = 7;
+       
+       entities.push({ yBottom: lm.gridY + d, type: 'landmark', obj: lm });
+    }
+
     entities.sort((a, b) => a.yBottom - b.yBottom);
+
+    // --- PRE-RENDER STATIC WORLD ---
+    // Rendering thousands of rects every frame destroys performance and 
+    // advancing RNG every frame causes seizure-inducing flashes.
+    // Instead, we render the static world ONCE to an offscreen canvas.
+    const staticCanvas = document.createElement('canvas');
+    staticCanvas.width = W;
+    staticCanvas.height = H;
+    const sctx = staticCanvas.getContext('2d');
+    sctx.imageSmoothingEnabled = false;
+
+    renderGround(sctx, env, rng);
+    renderWreckedCars(sctx, env, rng);
+
+    for (const ent of entities) {
+      if (ent.type === 'nature') {
+        renderNatureEntity(sctx, ent.obj, env, rng);
+      } else if (ent.type === 'building') {
+        renderBuilding(sctx, ent.obj, env, rng);
+      } else if (ent.type === 'landmark') {
+        renderSingleLandmark(sctx, ent.obj, env, rng);
+      }
+    }
+    
+    renderPostProcess(sctx, env);
 
     // Player starting position (center of walkable area)
     playerWorldX = W / 2;
@@ -238,20 +278,9 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
 
       applyCameraTransform(ctx);
 
-      // Render layers in order
-      renderGround(ctx, env, rng);
-      renderWreckedCars(ctx, env, rng);
+      // Draw the pre-rendered static world
+      ctx.drawImage(staticCanvas, 0, 0);
 
-      for (const ent of entities) {
-        if (ent.type === 'nature') {
-          renderNatureEntity(ctx, ent.obj, env, rng);
-        } else {
-          renderBuilding(ctx, ent.obj, env, rng);
-        }
-      }
-
-      renderLandmarks(ctx, gameLoc, env, rng);
-      renderPostProcess(ctx, env);
       drawPlayer(ctx);
 
       restoreCameraTransform(ctx);
