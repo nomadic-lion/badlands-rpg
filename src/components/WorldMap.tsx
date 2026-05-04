@@ -259,35 +259,6 @@ export function WorldMap({ locations, currentLocationId, onTravel }: WorldMapPro
       requestAnimationFrame(draw);
     }
 
-    canvas.addEventListener('pointerdown', (e) => {
-      isDragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      
-      const rect = canvas.getBoundingClientRect();
-      const sx = (e.clientX - rect.left) * window.devicePixelRatio;
-      const sy = (e.clientY - rect.top) * window.devicePixelRatio;
-      
-      const worldX = (sx - width/2) / camZoom + camX;
-      const worldY = (sy - height/2) / camZoom + camY;
-      
-      let found = false;
-      locations.forEach(loc => {
-        const pos = worldToPx(loc.x, loc.y);
-        const dist = Math.sqrt((worldX - pos.x)**2 + (worldY - pos.y)**2);
-        if (dist < 40 / camZoom) {
-          selectedLoc = loc;
-          showTooltip(loc);
-          found = true;
-        }
-      });
-
-      if (!found && tooltip.style.display === 'block') {
-        // Only hide if we didn't click inside the tooltip (handled by pointer-events:auto)
-        // hideTooltip();
-      }
-    });
-
     function showTooltip(loc) {
       tooltipTitle.innerText = loc.name.toUpperCase();
       tooltipDesc.innerText = loc.description || "A desolate sector in the Badlands. High risk, high reward.";
@@ -306,8 +277,62 @@ export function WorldMap({ locations, currentLocationId, onTravel }: WorldMapPro
       selectedLoc = null;
     }
 
+    // Pinch to Zoom handling
+    let initialDist = 0;
+    let initialZoom = 0;
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        initialZoom = camZoom;
+      } else {
+        isDragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        
+        const rect = canvas.getBoundingClientRect();
+        const sx = (e.touches[0].clientX - rect.left) * window.devicePixelRatio;
+        const sy = (e.touches[0].clientY - rect.top) * window.devicePixelRatio;
+        
+        const worldX = (sx - width/2) / camZoom + camX;
+        const worldY = (sy - height/2) / camZoom + camY;
+        
+        let found = false;
+        locations.forEach(loc => {
+          const pos = worldToPx(loc.x, loc.y);
+          const dist = Math.sqrt((worldX - pos.x)**2 + (worldY - pos.y)**2);
+          if (dist < 40 / camZoom) {
+            selectedLoc = loc;
+            showTooltip(loc);
+            found = true;
+          }
+        });
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        const zoomChange = dist / initialDist;
+        camZoom = Math.min(2.5, Math.max(0.2, initialZoom * zoomChange));
+      } else if (isDragging) {
+        const dx = e.touches[0].clientX - lastX;
+        const dy = e.touches[0].clientY - lastY;
+        camX -= dx / camZoom * window.devicePixelRatio;
+        camY -= dy / camZoom * window.devicePixelRatio;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+      initialDist = 0;
+    });
+
     window.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
+      if (!isDragging || e.pointerType === 'touch') return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       camX -= dx / camZoom * window.devicePixelRatio;
@@ -321,7 +346,7 @@ export function WorldMap({ locations, currentLocationId, onTravel }: WorldMapPro
     // Mouse wheel zoom
     window.addEventListener('wheel', (e) => {
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      camZoom = Math.min(2, Math.max(0.1, camZoom * delta));
+      camZoom = Math.min(2.5, Math.max(0.2, camZoom * delta));
     });
 
     draw();

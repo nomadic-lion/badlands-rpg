@@ -271,7 +271,6 @@ export default function App() {
           <View style={styles.playerInfo}>
             <View style={styles.portraitContainer}>
               <Image source={{ uri: PLAYER_AVATAR_B64 }} style={styles.portrait} />
-              <View style={styles.portraitBorder} />
             </View>
             <View style={styles.playerNameContainer}>
               <Text style={styles.playerLabel}>OPERATIVE_ID</Text>
@@ -347,9 +346,21 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#0f0d0b', borderBottomWidth: 1, borderBottomColor: '#3d3228', paddingHorizontal: 16, paddingBottom: 12 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   playerInfo: { flexDirection: 'row', alignItems: 'center' },
-  portraitContainer: { width: 44, height: 44, position: 'relative', marginRight: 12 },
-  portrait: { width: '100%', height: '100%', borderRadius: 22, backgroundColor: '#1a1612' },
-  portraitBorder: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 22, borderWidth: 1.5, borderColor: '#c9a444', opacity: 0.8 },
+  portraitContainer: { 
+    width: 64, height: 64, 
+    borderRadius: 32, 
+    borderWidth: 2, 
+    borderColor: '#c9a444', 
+    backgroundColor: '#1a1612',
+    marginRight: 16,
+    overflow: 'hidden',
+    shadowColor: '#c9a444', shadowOpacity: 0.5, shadowRadius: 8,
+    position: 'relative'
+  },
+  portrait: { 
+    width: '100%', height: '100%', 
+    transform: [{ scale: 1.4 }, { translateY: 4 }] // Zoom in on face
+  },
   playerNameContainer: { justifyContent: 'center' },
   playerLabel: { color: 'rgba(201,164,68,0.5)', fontFamily: 'JetBrainsMono_Bold', fontSize: 8, letterSpacing: 1, marginBottom: 2 },
   playerName: { color: '#d4c5b0', fontFamily: 'Anton', fontSize: 18, letterSpacing: 1 },

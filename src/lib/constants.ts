@@ -52,7 +52,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'tijuana_outskirts',
     name: 'Tijuana Outskirts',
     description: 'The shattered remains of the border city. Gangs fight over the scraps of a once-bustling trade hub.',
-    x: 4.8, y: 8.2,
+    x: 6.8, y: 10.2,
     type: 'ruins',
     subLocations: [
       createSubLocation('tj_house_1', 'Abandoned House', 'residential'),
@@ -63,7 +63,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'tijuana_center',
     name: 'Tijuana Zona Centro',
     description: 'The heart of the chaos. Checkpoints and ruins make every street a potential ambush.',
-    x: 5.2, y: 8.0,
+    x: 7.2, y: 10.0,
     type: 'ruins',
     subLocations: [
       createSubLocation('tj_police', 'Federal Police Station', 'police'),
@@ -87,7 +87,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'sonoran_desert_road',
     name: 'La Rumorosa Highway',
     description: 'A winding, treacherous road through the mountains. Rumored to be haunted by those who died in the heat.',
-    x: 6.2, y: 8.1,
+    x: 10.0, y: 7.0,
     type: 'gas_station',
     subLocations: [
       createSubLocation('road_gas', 'Abandoned Pemex', 'commercial'),
@@ -98,7 +98,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'mexicali_ruins',
     name: 'Mexicali Ruins',
     description: 'Scorched earth and solar fields. The heat here is as deadly as the bullets.',
-    x: 7.0, y: 8.0,
+    x: 9.0, y: 10.0,
     type: 'ruins',
     subLocations: [
       createSubLocation('mx_house_1', 'Burned House', 'residential'),
@@ -138,7 +138,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'michoacan_forest',
     name: 'Michoacán',
     description: 'Dense forests hiding secret laboratories and clandestine airfields.',
-    x: 13.0, y: 10.0,
+    x: 15.0, y: 12.0,
     type: 'rural_forest',
     subLocations: [
       createSubLocation('mich_farm', 'Avocado Farm Ruins', 'residential'),
@@ -154,7 +154,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'la_downtown',
     name: 'Los Angeles',
     description: 'The neon-lit jungle of the north. Gangs and corporate remnants battle for control of the skyscrapers.',
-    x: 4.0, y: 6.0,
+    x: 5.0, y: 8.0,
     type: 'city_la',
     subLocations: [
       createSubLocation('la_tent', 'Sprawling Tent City', 'residential'),
@@ -180,7 +180,7 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
     id: 'vegas_strip',
     name: 'Las Vegas Strip',
     description: 'The lights never truly die. Gambling, crime, and excess in the heart of the Mojave.',
-    x: 7.0, y: 3.0,
+    x: 9.0, y: 4.0,
     type: 'city_vegas',
     subLocations: [
       createSubLocation('lv_bellagio', 'Flooded Casino Resort', 'commercial'),

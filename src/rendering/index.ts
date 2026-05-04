@@ -166,10 +166,10 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
       ctx.ellipse(px + 1, py + 8, 12, 5, 0, 0, Math.PI * 2); 
       ctx.fill();
 
-      // Premium "Pulse" ring
+      // Premium "Pulse" ring - shifted outside the portrait
       const t = Date.now() * 0.003;
-      const pingR = 15 + Math.sin(t) * 3;
-      ctx.strokeStyle = 'rgba(201,164,68,' + (0.4 + Math.sin(t) * 0.2) + ')';
+      const pingR = 48 + Math.sin(t) * 8;
+      ctx.strokeStyle = 'rgba(201,164,68,' + (0.3 + Math.sin(t) * 0.2) + ')';
       ctx.lineWidth = 2;
       ctx.beginPath(); 
       ctx.arc(px, py, pingR, 0, Math.PI * 2); 
@@ -181,45 +181,41 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
         
         // Gold Outer Ring
         ctx.beginPath();
-        ctx.arc(px, py, 24, 0, Math.PI * 2);
+        ctx.arc(px, py, 34, 0, Math.PI * 2);
         ctx.fillStyle = '#c9a444';
         ctx.fill();
 
         // Inner Black Border
         ctx.beginPath();
-        ctx.arc(px, py, 22, 0, Math.PI * 2);
+        ctx.arc(px, py, 32, 0, Math.PI * 2);
         ctx.fillStyle = '#0f0d0b';
         ctx.fill();
 
         // Clipping circle for image
         ctx.beginPath();
-        ctx.arc(px, py, 20, 0, Math.PI * 2);
+        ctx.arc(px, py, 30, 0, Math.PI * 2);
         ctx.clip();
         
-        // Center the portrait (assuming it might not be square)
-        const size = 40;
-        ctx.drawImage(playerImg, px - size/2, py - size/2, size, size);
+        // Center and Zoom on the face
+        const markerSize = 64;
+        const sw = playerImg.naturalWidth;
+        const sh = playerImg.naturalHeight;
+        
+        ctx.drawImage(
+          playerImg, 
+          sw * 0.1, sh * 0.05, 
+          sw * 0.8, sh * 0.8, 
+          px - markerSize/2, py - markerSize/2, 
+          markerSize, markerSize
+        );
         
         ctx.restore();
-
-        // Subtle reflection/shine on the glass
-        const grad = ctx.createLinearGradient(px - 15, py - 15, px + 15, py + 15);
-        grad.addColorStop(0, 'rgba(255,255,255,0.15)');
-        grad.addColorStop(0.5, 'rgba(255,255,255,0)');
-        grad.addColorStop(1, 'rgba(255,255,255,0.05)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(px, py, 20, 0, Math.PI * 2);
-        ctx.fill();
       } else {
-        // High-quality fallback if image hasn't loaded yet
+        // Fallback
         ctx.beginPath(); ctx.arc(px, py, 22, 0, Math.PI * 2);
         ctx.fillStyle = '#c9a444'; ctx.fill();
         ctx.beginPath(); ctx.arc(px, py, 18, 0, Math.PI * 2);
         ctx.fillStyle = '#0f0d0b'; ctx.fill();
-        ctx.fillStyle = '#c9a444';
-        ctx.beginPath(); ctx.arc(px, py - 5, 7, 0, Math.PI * 2); ctx.fill();
-        ctx.fillRect(px - 4, py + 2, 8, 10);
       }
     }
 
