@@ -1,7 +1,8 @@
 import { GameLocation, Item } from './types';
+import { ITEM_GLOCK_17_B64, ITEM_BOTTLED_WATER_B64 } from '../rendering/itemAssets';
 
 export const ITEMS: Record<string, Item> = {
-  water_bottle: { id: 'water_bottle', name: 'Bottled Water', type: 'water', description: 'Clean water, a rare commodity.', weight: 1.0, thirst: 30 },
+  water_bottle: { id: 'water_bottle', name: 'Bottled Water', type: 'water', description: 'Clean water, a rare commodity.', weight: 1.0, thirst: 30, image: ITEM_BOTTLED_WATER_B64 },
   dirty_water: { id: 'dirty_water', name: 'Dirty Water', type: 'water', description: 'Might make you sick, but keeps you alive.', weight: 1.0, thirst: 15, health: -5 },
   canned_beans: { id: 'canned_beans', name: 'Canned Beans', type: 'food', description: 'Staple survival food.', weight: 0.5, hunger: 25 },
   stale_tortilla: { id: 'stale_tortilla', name: 'Stale Tortilla', type: 'food', description: 'Hard as a rock.', weight: 0.1, hunger: 10 },
@@ -9,6 +10,7 @@ export const ITEMS: Record<string, Item> = {
   rags: { id: 'rags', name: 'Rags', type: 'material', description: 'Torn clothing.', weight: 0.1 },
   bandages: { id: 'bandages', name: 'Makeshift Bandage', type: 'medical', description: 'Stops bleeding.', weight: 0.1, health: 20 },
   machete: { id: 'machete', name: 'Rusty Machete', type: 'weapon', description: 'Standard cartel tool.', weight: 1.5 },
+  glock_17: { id: 'glock_17', name: 'Glock 17', type: 'weapon', description: 'Standard tactical sidearm. Reliable and lethal.', weight: 0.9, image: ITEM_GLOCK_17_B64 },
   ammunition_9mm: { id: 'ammunition_9mm', name: '9mm Ammo', type: 'material', description: 'Currency and defense.', weight: 0.01 },
 };
 
@@ -49,7 +51,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'tijuana_outskirts',
     name: 'Tijuana Outskirts',
-    x: 10, y: 10,
+    description: 'The shattered remains of the border city. Gangs fight over the scraps of a once-bustling trade hub.',
+    x: 4.8, y: 8.2,
     type: 'ruins',
     subLocations: [
       createSubLocation('tj_house_1', 'Abandoned House', 'residential'),
@@ -59,7 +62,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'tijuana_center',
     name: 'Tijuana Zona Centro',
-    x: 12, y: 11,
+    description: 'The heart of the chaos. Checkpoints and ruins make every street a potential ambush.',
+    x: 5.2, y: 8.0,
     type: 'ruins',
     subLocations: [
       createSubLocation('tj_police', 'Federal Police Station', 'police'),
@@ -71,7 +75,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'cartel_checkpoint_alpha',
     name: 'Highway Checkpoint Alpha',
-    x: 16, y: 10,
+    description: 'A fortified blockade on the road north. Controlled by the Sinaloa remnants.',
+    x: 5.5, y: 6.5,
     type: 'cartel_base',
     subLocations: [
       createSubLocation('checkpoint_armory', 'Improvised Armory', 'police'),
@@ -81,7 +86,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'sonoran_desert_road',
     name: 'La Rumorosa Highway',
-    x: 20, y: 9,
+    description: 'A winding, treacherous road through the mountains. Rumored to be haunted by those who died in the heat.',
+    x: 6.2, y: 8.1,
     type: 'gas_station',
     subLocations: [
       createSubLocation('road_gas', 'Abandoned Pemex', 'commercial'),
@@ -91,7 +97,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'mexicali_ruins',
     name: 'Mexicali Ruins',
-    x: 25, y: 8,
+    description: 'Scorched earth and solar fields. The heat here is as deadly as the bullets.',
+    x: 7.0, y: 8.0,
     type: 'ruins',
     subLocations: [
       createSubLocation('mx_house_1', 'Burned House', 'residential'),
@@ -102,7 +109,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'nogales_border',
     name: 'Nogales Border Wall',
-    x: 35, y: 8,
+    description: 'The final barrier. Refugee camps and smugglers stashes line the massive iron wall.',
+    x: 7.0, y: 9.0,
     type: 'safezone',
     subLocations: [
       createSubLocation('nog_camp', 'Refugee Camp', 'residential'),
@@ -113,7 +121,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'sinaloa_mountains',
     name: 'Sinaloa Highlands',
-    x: 40, y: 50,
+    description: 'Rugged terrain dominated by fortified haciendas and hidden cartel camps.',
+    x: 10.0, y: 9.0,
     type: 'rural_mountains',
     subLocations: [
       createSubLocation('sin_camp', 'Hidden Cartel Camp', 'police'),
@@ -127,8 +136,9 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   },
   {
     id: 'michoacan_forest',
-    name: 'Michoacán Sierra',
-    x: 45, y: 65,
+    name: 'Michoacán',
+    description: 'Dense forests hiding secret laboratories and clandestine airfields.',
+    x: 13.0, y: 10.0,
     type: 'rural_forest',
     subLocations: [
       createSubLocation('mich_farm', 'Avocado Farm Ruins', 'residential'),
@@ -142,8 +152,9 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   },
   {
     id: 'la_downtown',
-    name: 'Los Angeles - Skid Row',
-    x: 8, y: 35,
+    name: 'Los Angeles',
+    description: 'The neon-lit jungle of the north. Gangs and corporate remnants battle for control of the skyscrapers.',
+    x: 4.0, y: 6.0,
     type: 'city_la',
     subLocations: [
       createSubLocation('la_tent', 'Sprawling Tent City', 'residential'),
@@ -156,8 +167,9 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   },
   {
     id: 'la_venice',
-    name: 'Venice Beach Ruins',
-    x: 6, y: 36,
+    name: 'Venice Beach',
+    description: 'Ruined boardwalks and flooded streets. A sun-drenched nightmare for the unwary.',
+    x: 3.0, y: 6.0,
     type: 'city_la',
     subLocations: [
       createSubLocation('la_boardwalk', 'Abandoned Boardwalk', 'commercial'),
@@ -167,7 +179,8 @@ export const INITIAL_LOCATIONS: GameLocation[] = [
   {
     id: 'vegas_strip',
     name: 'Las Vegas Strip',
-    x: 55, y: 25,
+    description: 'The lights never truly die. Gambling, crime, and excess in the heart of the Mojave.',
+    x: 7.0, y: 3.0,
     type: 'city_vegas',
     subLocations: [
       createSubLocation('lv_bellagio', 'Flooded Casino Resort', 'commercial'),

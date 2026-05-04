@@ -22,17 +22,18 @@ const INITIAL_STATE: GameState = {
     { id: '1', timestamp: Date.now(), message: 'Awoke in the outskirts of Tijuana. The cartels have burned everything. I need to survive.', type: 'warning' }
   ],
   locations: JSON.parse(JSON.stringify(INITIAL_LOCATIONS)), // Deep copy
+  playerName: 'EL XOMAR',
 };
+
+const createLog = (message: string, type: LogEntry['type'] = 'info'): LogEntry => ({
+  id: Math.random().toString(),
+  timestamp: Date.now(),
+  message,
+  type
+});
 
 export const useGameState = () => {
   const [state, setState] = useState<GameState>(INITIAL_STATE);
-
-  const addLog = useCallback((message: string, type: LogEntry['type'] = 'info') => {
-    setState(prev => ({
-      ...prev,
-      logs: [{ id: Math.random().toString(), timestamp: Date.now(), message, type }, ...prev.logs].slice(0, 50)
-    }));
-  }, []);
 
   const passTime = useCallback((hours: number) => {
     setState(prev => {
@@ -102,13 +103,16 @@ export const useGameState = () => {
       newLocations[locIndex] = { ...loc, subLocations: [...loc.subLocations] };
       newLocations[locIndex].subLocations[subLocIndex] = { ...subLoc, searched: true };
 
-      if (combatLog) addLog(combatLog, 'combat');
-      addLog(`Searched ${subLoc.name}. Found: ${foundItems.length > 0 ? foundItems.join(', ') : 'Nothing useful.'}`, foundItems.length > 0 ? 'loot' : 'info');
-      
+      // Update logs
+      const newLogs = [...prev.logs];
+      if (combatLog) newLogs.unshift(createLog(combatLog, 'combat'));
+      newLogs.unshift(createLog(`Searched ${subLoc.name}. Found: ${foundItems.length > 0 ? foundItems.join(', ') : 'Nothing useful.'}`, foundItems.length > 0 ? 'loot' : 'info'));
+
       return {
         ...prev,
         inventory: newInventory,
         locations: newLocations,
+        logs: newLogs.slice(0, 50),
         stats: {
           ...prev.stats,
           health: Math.max(0, prev.stats.health - healthLost),
@@ -120,7 +124,7 @@ export const useGameState = () => {
         day: prev.hour + 1 >= 24 ? prev.day + 1 : prev.day
       };
     });
-  }, [addLog]);
+  }, []);
 
   const useItem = useCallback((itemId: string) => {
     setState(prev => {
@@ -144,15 +148,16 @@ export const useGameState = () => {
       if (item.thirst) newStats.thirst = Math.min(newStats.maxThirst, newStats.thirst + item.thirst);
       if (item.energy) newStats.energy = Math.min(newStats.maxEnergy, newStats.energy + item.energy);
 
-      addLog(`Consumed ${item.name}.`, 'info');
+      const newLogs = [createLog(`Consumed ${item.name}.`, 'info'), ...prev.logs].slice(0, 50);
 
       return {
         ...prev,
         inventory: newInventory,
-        stats: newStats
+        stats: newStats,
+        logs: newLogs
       };
     });
-  }, [addLog]);
+  }, []);
 
   const travel = useCallback((destinationId: string) => {
     setState(prev => {
@@ -170,20 +175,21 @@ export const useGameState = () => {
       //   return prev;
       // }
 
-      addLog(`Traveled to ${destLoc.name}. Took ${hoursTaken} hours.`, 'info');
-      // Time passing will handle stat drain
+      const newLogs = [createLog(`Traveled to ${destLoc.name}. Took ${hoursTaken} hours.`, 'info'), ...prev.logs].slice(0, 50);
+      
       let newHour = prev.hour + hoursTaken;
       let newDay = prev.day;
       if (newHour >= 24) {
         newDay += Math.floor(newHour / 24);
         newHour = newHour % 24;
       }
-      
+
       return {
         ...prev,
         currentLocationId: destinationId,
         hour: newHour,
         day: newDay,
+        logs: newLogs,
         stats: {
           ...prev.stats,
           // energy: prev.stats.energy - energyCost,
@@ -192,7 +198,7 @@ export const useGameState = () => {
         }
       };
     });
-  }, [addLog]);
+  }, []);
 
   const rest = useCallback(() => {
     setState(prev => {
@@ -202,8 +208,7 @@ export const useGameState = () => {
         newDay += Math.floor(newHour / 24);
         newHour = newHour % 24;
       }
-      addLog('Rested for 8 hours.', 'info');
-      
+
       const newStats = { ...prev.stats };
       newStats.energy = Math.min(newStats.maxEnergy, newStats.energy + 50);
       newStats.hunger = Math.max(0, newStats.hunger - 16);
@@ -217,14 +222,17 @@ export const useGameState = () => {
         newStats.health = Math.min(newStats.maxHealth, newStats.health + 10);
       }
 
+      const newLogs = [createLog('Rested for 8 hours.', 'info'), ...prev.logs].slice(0, 50);
+
       return {
         ...prev,
         day: newDay,
         hour: newHour,
-        stats: newStats
+        stats: newStats,
+        logs: newLogs
       };
     });
-  }, [addLog]);
+  }, []);
 
   const craftItem = useCallback((recipeId: string) => {
     setState(prev => {
@@ -256,11 +264,12 @@ export const useGameState = () => {
       // Add output
       newInventory[recipe.outputId] = (newInventory[recipe.outputId] || 0) + recipe.outputQty;
 
-      addLog(`Crafted ${recipe.outputQty}x ${ITEMS[recipe.outputId]?.name || recipe.outputId}.`, 'info');
+      const newLogs = [createLog(`Crafted ${recipe.outputQty}x ${ITEMS[recipe.outputId]?.name || recipe.outputId}.`, 'info'), ...prev.logs].slice(0, 50);
 
       return {
         ...prev,
         inventory: newInventory,
+        logs: newLogs,
         stats: {
           ...prev.stats,
           energy: prev.stats.energy - 15, // Cost of crafting
@@ -271,7 +280,7 @@ export const useGameState = () => {
         day: prev.hour + 1 >= 24 ? prev.day + 1 : prev.day
       };
     });
-  }, [addLog]);
+  }, []);
 
   const resetGame = useCallback(() => {
     setState(INITIAL_STATE);

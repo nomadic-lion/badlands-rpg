@@ -6,6 +6,7 @@
  * touch handling for point-and-click movement, and zoom controls.
  */
 
+import { PIXEL_ENGINE_JS } from './pixelEngine';
 import { ENGINE_JS } from './engine';
 import { GROUND_JS } from './ground';
 import { NATURE_JS } from './nature';
@@ -14,6 +15,7 @@ import { BUILDINGS_JS } from './buildings';
 import { LANDMARKS_JS } from './landmarks';
 import { POSTPROCESS_JS } from './postprocess';
 import { GameLocation } from '../lib/types';
+import { PLAYER_AVATAR_B64 } from './assets';
 
 export function buildMapHTML(location: GameLocation | undefined, hour: number): string {
   if (!location) return '<html><body style="background:#0f0d0b"></body></html>';
@@ -52,7 +54,6 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
       canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
       if (ctx) ctx.imageSmoothingEnabled = false;
     }
-    resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
     window.onerror = function(msg, url, lineNo, columnNo, error) {
@@ -64,6 +65,7 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     };
 
     // --- Inject rendering modules ---
+    ${PIXEL_ENGINE_JS}
     ${ENGINE_JS}
     ${GROUND_JS}
     ${NATURE_JS}
@@ -77,8 +79,8 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     const hour = ${hour};
     const rng = initPRNG(gameLoc);
     const env = generateGrid(gameLoc, rng);
-    env.isNight = hour < 6 || hour > 19;
-    env.isDusk = hour === 6 || hour === 19 || hour === 18;
+    env.isNight = false; // Disabled dynamic weather per user request
+    env.isDusk = false; // Disabled dynamic weather
     env.locationId = gameLoc.id;
     env.location = gameLoc; // Needed for generateBuildings to check landmarks
 
@@ -121,6 +123,7 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
 
     renderGround(sctx, env, rng);
     renderWreckedCars(sctx, env, rng);
+    renderStreetProps(sctx, env, rng);
 
     for (const ent of entities) {
       if (ent.type === 'nature') {
@@ -135,41 +138,89 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
     renderPostProcess(sctx, env);
 
     // Player starting position (center of walkable area)
-    playerWorldX = W / 2;
-    playerWorldY = H / 2;
-    playerTargetX = playerWorldX;
-    playerTargetY = playerWorldY;
-    camX = playerWorldX;
-    camY = playerWorldY;
+    try {
+      resizeCanvas();
+      // Player starting position (center of walkable area)
+      window.playerWorldX = W / 2;
+      window.playerWorldY = H / 2;
+      window.playerTargetX = window.playerWorldX;
+      window.playerTargetY = window.playerWorldY;
+      window.camX = window.playerWorldX;
+      window.camY = window.playerWorldY;
+    } catch (err) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'error', message: 'Init Error: ' + err.message }));
+    }
+
+    // --- PLAYER AVATAR LOADING ---
+    const playerImg = new Image();
+    playerImg.src = "${PLAYER_AVATAR_B64}";
 
     // --- PLAYER DRAWING ---
     function drawPlayer(ctx) {
-      const px = playerWorldX;
-      const py = playerWorldY;
+      const px = window.playerWorldX;
+      const py = window.playerWorldY;
 
-      // Shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.beginPath(); ctx.ellipse(px, py + 6, 10, 4, 0, 0, Math.PI * 2); ctx.fill();
+      // Soft drop shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); 
+      ctx.ellipse(px + 1, py + 8, 12, 5, 0, 0, Math.PI * 2); 
+      ctx.fill();
 
-      // Ping ring animation
+      // Premium "Pulse" ring
       const t = Date.now() * 0.003;
-      const pingR = 14 + Math.sin(t) * 4;
-      ctx.strokeStyle = 'rgba(201,164,68,' + (0.3 + Math.sin(t) * 0.15) + ')';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(px, py, pingR, 0, Math.PI * 2); ctx.stroke();
+      const pingR = 15 + Math.sin(t) * 3;
+      ctx.strokeStyle = 'rgba(201,164,68,' + (0.4 + Math.sin(t) * 0.2) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); 
+      ctx.arc(px, py, pingR, 0, Math.PI * 2); 
+      ctx.stroke();
 
-      // Avatar circle border
-      ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2);
-      ctx.fillStyle = '#c9a444'; ctx.fill();
-      ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI * 2);
-      ctx.fillStyle = '#0f0d0b'; ctx.fill();
+      // Avatar Drawing
+      if (playerImg.complete && playerImg.naturalWidth !== 0) {
+        ctx.save();
+        
+        // Gold Outer Ring
+        ctx.beginPath();
+        ctx.arc(px, py, 24, 0, Math.PI * 2);
+        ctx.fillStyle = '#c9a444';
+        ctx.fill();
 
-      // Simple character icon
-      ctx.fillStyle = '#c9a444';
-      // Head
-      ctx.beginPath(); ctx.arc(px, py - 3, 4, 0, Math.PI * 2); ctx.fill();
-      // Body
-      ctx.fillRect(px - 2, py + 1, 4, 6);
+        // Inner Black Border
+        ctx.beginPath();
+        ctx.arc(px, py, 22, 0, Math.PI * 2);
+        ctx.fillStyle = '#0f0d0b';
+        ctx.fill();
+
+        // Clipping circle for image
+        ctx.beginPath();
+        ctx.arc(px, py, 20, 0, Math.PI * 2);
+        ctx.clip();
+        
+        // Center the portrait (assuming it might not be square)
+        const size = 40;
+        ctx.drawImage(playerImg, px - size/2, py - size/2, size, size);
+        
+        ctx.restore();
+
+        // Subtle reflection/shine on the glass
+        const grad = ctx.createLinearGradient(px - 15, py - 15, px + 15, py + 15);
+        grad.addColorStop(0, 'rgba(255,255,255,0.15)');
+        grad.addColorStop(0.5, 'rgba(255,255,255,0)');
+        grad.addColorStop(1, 'rgba(255,255,255,0.05)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(px, py, 20, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // High-quality fallback if image hasn't loaded yet
+        ctx.beginPath(); ctx.arc(px, py, 22, 0, Math.PI * 2);
+        ctx.fillStyle = '#c9a444'; ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, 18, 0, Math.PI * 2);
+        ctx.fillStyle = '#0f0d0b'; ctx.fill();
+        ctx.fillStyle = '#c9a444';
+        ctx.beginPath(); ctx.arc(px, py - 5, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(px - 4, py + 2, 8, 10);
+      }
     }
 
     // --- TOOLTIP STATE ---
@@ -251,12 +302,12 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
       }
 
       // Otherwise: point-and-click movement
-      playerTargetX = Math.max(TILE, Math.min(W - TILE, world.x));
-      playerTargetY = Math.max(TILE, Math.min(H - TILE, world.y));
-      playerMoving = true;
+      window.playerTargetX = Math.max(TILE, Math.min(W - TILE, world.x));
+      window.playerTargetY = Math.max(TILE, Math.min(H - TILE, world.y));
+      window.playerMoving = true;
 
       window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'playerMove', x: playerTargetX / W, y: playerTargetY / H
+        type: 'playerMove', x: window.playerTargetX / W, y: window.playerTargetY / H
       }));
     }, { passive: false });
 
@@ -264,7 +315,7 @@ export function buildMapHTML(location: GameLocation | undefined, hour: number): 
 
     // --- ZOOM CONTROL (called from React Native) ---
     window.setZoom = function(level) {
-      camZoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, level));
+      window.camZoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, level));
     };
 
     // --- RENDER LOOP ---

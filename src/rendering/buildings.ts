@@ -79,6 +79,11 @@ function generateBuildings(env, rng) {
           else if (rand() > 0.7 && env.locationId === 'la_venice') bStyle = 'beach_house';
           else bStyle = 'concrete_modern';
           neonColor = randChoice(['#ff3333', '#c9a444', '#00ccff']);
+        } else if (env.locationId.startsWith('tijuana')) {
+          const r = rand();
+          if (r > 0.6) bStyle = 'slum';
+          else if (r > 0.3) bStyle = 'ruin';
+          else bStyle = 'concrete';
         }
         if (grid[bx][by] === 5 || (bx > 0 && grid[bx - 1][by] === 5)) bStyle = 'beach_house';
 
@@ -86,7 +91,17 @@ function generateBuildings(env, rng) {
       } else if (rand() < natureChance) {
         if (bx + 1 < cols && by + 1 < rows && grid[bx][by] === 0 && grid[bx + 1][by] === 0 && grid[bx][by + 1] === 0 && grid[bx + 1][by + 1] === 0) {
           grid[bx][by] = 3; grid[bx + 1][by] = 3; grid[bx][by + 1] = 3; grid[bx + 1][by + 1] = 3;
-          nature.push({ x: bx, y: by, type: isForest ? 'tree' : (isLA ? 'palm' : 'rock'), size: randInt(1, 3) });
+          let nType = isForest ? 'tree' : (isLA ? 'palm' : 'rock');
+          
+          // Add palms to Michoacan forest
+          if (isForest && env.locationId.includes('michoacan') && rand() > 0.7) {
+            nType = 'palm';
+          }
+          
+          if ((env.locationId === 'sinaloa_mountains' || env.locationId === 'michoacan_forest') && rand() > 0.6) {
+            nType = 'crop';
+          }
+          nature.push({ x: bx, y: by, type: nType, size: randInt(1, 3) });
         }
       }
     }
@@ -96,8 +111,8 @@ function generateBuildings(env, rng) {
 
 function renderBuilding(ctx, b, env, rng) {
   const { rand, randInt, randChoice } = rng;
-  const isNight = env.isNight;
-  const isDusk = env.isDusk;
+  const isMichoacan = env.locationId.includes('michoacan');
+  const isCity = env.locationId.includes('la_') || env.locationId.includes('vegas');
 
   const px = b.x * TILE;
   const py = b.y * TILE;
@@ -113,21 +128,16 @@ function renderBuilding(ctx, b, env, rng) {
     const peakY = py + pd / 2 - ph * 1.5;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.beginPath(); ctx.moveTo(px + pw, py); ctx.lineTo(px + pw + ph * 1.5, py + ph * 0.5); ctx.lineTo(px + pw + ph * 1.5, py + pd + ph * 0.5); ctx.lineTo(px + pw, py + pd); ctx.fill();
-    ctx.fillStyle = isNight ? '#0a0a0a' : '#1f1a14';
+    ctx.fillStyle = isMichoacan ? '#0a0a0a' : '#1f1a14';
     ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + pd); ctx.lineTo(peakX, peakY); ctx.fill();
     const grad = ctx.createLinearGradient(px, py + pd, peakX, peakY);
-    grad.addColorStop(0, isNight ? '#1f1b16' : '#2a241d'); grad.addColorStop(1, '#110f0c');
+    grad.addColorStop(0, isMichoacan ? '#1f1b16' : '#2a241d'); grad.addColorStop(1, '#110f0c');
     ctx.fillStyle = grad;
     ctx.beginPath(); ctx.moveTo(px, py + pd); ctx.lineTo(px + pw, py + pd); ctx.lineTo(peakX, peakY); ctx.fill();
     const gradR = ctx.createLinearGradient(px + pw, py + pd, peakX, peakY);
-    gradR.addColorStop(0, isNight ? '#14120e' : '#1c1813'); gradR.addColorStop(1, '#0a0806');
+    gradR.addColorStop(0, isMichoacan ? '#14120e' : '#1c1813'); gradR.addColorStop(1, '#0a0806');
     ctx.fillStyle = gradR;
     ctx.beginPath(); ctx.moveTo(px + pw, py); ctx.lineTo(px + pw, py + pd); ctx.lineTo(peakX, peakY); ctx.fill();
-    if (isNight && b.neonColor) {
-      ctx.strokeStyle = b.neonColor; ctx.lineWidth = 1.5; ctx.shadowColor = b.neonColor; ctx.shadowBlur = 15;
-      ctx.beginPath(); ctx.moveTo(px, py + pd); ctx.lineTo(peakX, peakY); ctx.lineTo(px + pw, py + pd); ctx.moveTo(px + pw, py + pd); ctx.lineTo(px + pw, py); ctx.lineTo(peakX, peakY); ctx.moveTo(px, py + pd); ctx.lineTo(px, py); ctx.lineTo(peakX, peakY); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(peakX, peakY, 4, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-    }
     return;
   }
 
@@ -143,6 +153,12 @@ function renderBuilding(ctx, b, env, rng) {
   else if (b.style === 'glass') { wallTop = '#1a3b4d'; wallBot = '#051119'; roofTop = '#112233'; roofBot = '#051119'; unlitWin = '#051119'; dayWin = '#2a5b7d'; winFrame = '#0c1b24'; }
   else if (b.style === 'vegas_gold') { wallTop = '#664d1a'; wallBot = '#332100'; roofTop = '#4d3913'; roofBot = '#1f1604'; unlitWin = '#1f1604'; dayWin = '#806020'; winFrame = '#33260d'; }
   else if (b.style === 'beach_house') { wallTop = '#d1c4b2'; wallBot = '#9c9285'; roofTop = '#b5543c'; roofBot = '#803826'; winFrame = '#8c7e6c'; }
+  else if (b.style === 'slum') { wallTop = randChoice(['#6b8a82', '#8f6764', '#707070', '#806e57']); wallBot = '#242424'; roofTop = '#8f4f34'; roofBot = '#4a2516'; winFrame = '#261b17'; }
+
+  if (isMichoacan) {
+    // Darker walls and roofs for Michoacan
+    wallTop = '#1c1813'; wallBot = '#0a0907'; roofTop = '#211c16'; roofBot = '#0d0b09'; dayWin = '#21323b';
+  }
 
   // Front wall gradient
   const wallGrad = ctx.createLinearGradient(px, wallY, px, wallY + ph);
@@ -152,7 +168,7 @@ function renderBuilding(ctx, b, env, rng) {
   // Weathering streaks
   if (b.style !== 'glass' && b.style !== 'vegas_gold') {
     for (let w = 4; w < pw; w += 8) {
-      ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.fillRect(px + w, wallY, randInt(1, 3), ph);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(px + w, wallY, randInt(1, 3), ph);
     }
   }
 
@@ -168,21 +184,18 @@ function renderBuilding(ctx, b, env, rng) {
       const winBaseX = px + wx * TILE + (TILE - winWidth) / 2;
       const winBaseY = wallY + wy * TILE + (TILE - winHeight) / 2 + 4;
 
-      if (isLit && isNight) {
-        let glowColor = randChoice(['#c9a444', '#f1c40f', '#e67e22', '#8b2b22']);
-        if (b.style === 'glass') glowColor = randChoice(['#a8d5e5', '#f1c40f', '#c9a444', '#2980b9']);
-        if (b.style === 'vegas_gold') glowColor = randChoice(['#ffeaa7', '#f1c40f', '#e67e22']);
-        if (env.isVegas) glowColor = randChoice([glowColor, '#00ffcc', '#ff00ff', '#39ff14']);
-
-        ctx.fillStyle = '#fff'; ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight);
-        ctx.fillStyle = glowColor; ctx.globalCompositeOperation = 'multiply'; ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight); ctx.globalCompositeOperation = 'source-over';
-        if (wy === winRows - 1) {
-          ctx.fillStyle = glowColor; ctx.globalAlpha = b.style === 'glass' ? 0.25 : 0.12;
-          ctx.beginPath(); ctx.moveTo(winBaseX, winBaseY + winHeight); ctx.lineTo(winBaseX + winWidth, winBaseY + winHeight); ctx.lineTo(winBaseX + winWidth + 10, py + pd + 20); ctx.lineTo(winBaseX - 10, py + pd + 20); ctx.fill(); ctx.globalAlpha = 1.0;
+      if ((isMichoacan || isCity) && isLit) { // Lit windows in dark/city regions
+        let glowColor = isCity ? '#fff' : randChoice(['#c9a444', '#f1c40f', '#e67e22', '#8b2b22']);
+        ctx.save();
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = glowColor;
+        ctx.fillStyle = '#fff'; 
+        ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight);
+        ctx.restore();
+        
+        if (!isCity) {
+          ctx.fillStyle = glowColor; ctx.globalCompositeOperation = 'multiply'; ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight); ctx.globalCompositeOperation = 'source-over';
         }
-      } else if (!isNight && isLit) {
-        ctx.fillStyle = dayWin; ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight);
-        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.moveTo(winBaseX, winBaseY); ctx.lineTo(winBaseX + 5, winBaseY); ctx.lineTo(winBaseX, winBaseY + 5); ctx.fill();
       } else {
         ctx.fillStyle = unlitWin; ctx.fillRect(winBaseX, winBaseY, winWidth, winHeight);
         ctx.fillStyle = winFrame; ctx.fillRect(winBaseX, winBaseY, winWidth, 2);
@@ -195,19 +208,47 @@ function renderBuilding(ctx, b, env, rng) {
     }
   }
 
+  // Neon Signs (Vegas/LA only)
+  if (isCity && b.neonColor && b.h >= 5) {
+    const nx = px + 8;
+    const ny = wallY + 10;
+    ctx.save();
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = b.neonColor;
+    ctx.fillStyle = b.neonColor;
+    // Professional Vertical Neon Tube
+    ctx.fillRect(nx, ny, 3, ph - 20);
+    // Decorative end caps
+    ctx.fillStyle = '#111';
+    ctx.fillRect(nx - 1, ny - 2, 5, 2);
+    ctx.fillRect(nx - 1, ny + ph - 20, 5, 2);
+    ctx.restore();
+  }
+
   // Roof
   const roofGrad = ctx.createLinearGradient(px, roofY, px + pw, roofY + pd);
   roofGrad.addColorStop(0, roofTop); roofGrad.addColorStop(1, roofBot);
   ctx.fillStyle = roofGrad; ctx.fillRect(px, roofY, pw, pd);
-  ctx.strokeStyle = winFrame; ctx.lineWidth = 3; ctx.strokeRect(px + 1.5, roofY + 1.5, pw - 3, pd - 3);
-  ctx.strokeStyle = roofTop; ctx.lineWidth = 1; ctx.strokeRect(px, roofY, pw, pd);
-
-  // Antenna on tall modern buildings
-  if ((b.style === 'glass' || b.style === 'concrete_modern') && b.h >= 6) {
-    ctx.fillStyle = '#1a1815'; ctx.fillRect(px + pw / 2 - 1, roofY - 20, 2, 20);
-    if (isNight && rand() > 0.5) {
-      ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(px + pw / 2, roofY - 20, 2, 0, Math.PI * 2); ctx.fill();
+  
+  if (b.style === 'slum') {
+    // Corrugated metal lines
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    for(let rx = 0; rx < pw; rx += 4) {
+      ctx.fillRect(px + rx, roofY, 2, pd);
     }
+    // Random side shack attached to the slum
+    if (rand() > 0.4) {
+      const sideLeft = rand() > 0.5;
+      const shackW = randInt(16, 24);
+      const sx = sideLeft ? px - shackW : px + pw;
+      const sy = wallY + pd - randInt(20, 30);
+      ctx.fillStyle = '#1a1612'; ctx.fillRect(sx, sy - 20, shackW, 20); // wall
+      ctx.fillStyle = '#6b3630'; ctx.fillRect(sx, sy - 24, shackW, 8);  // roof
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(sx, sy - 24, 2, 8);
+    }
+  } else {
+    ctx.strokeStyle = winFrame; ctx.lineWidth = 3; ctx.strokeRect(px + 1.5, roofY + 1.5, pw - 3, pd - 3);
+    ctx.strokeStyle = roofTop; ctx.lineWidth = 1; ctx.strokeRect(px, roofY, pw, pd);
   }
 
   // HVAC units
@@ -225,32 +266,13 @@ function renderBuilding(ctx, b, env, rng) {
   }
 
   // Rooftop pool / helipad (Vegas/LA tall buildings)
-  if (env.isVegas || env.isLA) {
+  if (isCity) {
     if (rand() > 0.6 && pw >= 90 && pd >= 90) {
       ctx.fillStyle = '#1a1612'; ctx.fillRect(px + pw / 2 - 22, roofY + pd / 2 - 22, 44, 44);
-      ctx.fillStyle = isNight ? '#003344' : '#0099cc'; ctx.fillRect(px + pw / 2 - 20, roofY + pd / 2 - 20, 40, 40);
-      if (isNight) { ctx.fillStyle = '#00ffff'; ctx.globalAlpha = 0.15; ctx.fillRect(px + pw / 2 - 20, roofY + pd / 2 - 20, 40, 40); ctx.globalAlpha = 1.0; }
+      ctx.fillStyle = '#0099cc'; ctx.fillRect(px + pw / 2 - 20, roofY + pd / 2 - 20, 40, 40);
     } else if (rand() > 0.7 && pw >= 70 && pd >= 70) {
       ctx.strokeStyle = '#c9a444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px + pw / 2, roofY + pd / 2, 16, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#c9a444'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('H', px + pw / 2, roofY + pd / 2);
-    }
-  }
-
-  // Neon signage (night, Vegas/LA)
-  if ((b.style === 'glass' || b.style === 'vegas_gold' || env.isVegas || env.isLA) && isNight && b.neonColor) {
-    const signColor = b.neonColor;
-    const signEdgeX = px + (rand() > 0.5 ? 0 : pw - 8);
-    if ((b.style === 'glass' || b.style === 'vegas_gold') && rand() > 0.3) {
-      ctx.strokeStyle = signColor; ctx.lineWidth = 2; ctx.shadowColor = signColor; ctx.shadowBlur = 10;
-      ctx.strokeRect(px, wallY + ph * 0.2, pw, 2);
-      if (b.h > 4) ctx.strokeRect(px, wallY + ph * 0.6, pw, 2);
-      ctx.shadowBlur = 0;
-    }
-    if (rand() > 0.5) {
-      ctx.fillStyle = '#111'; ctx.fillRect(signEdgeX, roofY + ph * 0.2, 8, ph * 0.6);
-      ctx.fillStyle = signColor; ctx.shadowColor = signColor; ctx.shadowBlur = 10;
-      for (let sy = roofY + ph * 0.25; sy < roofY + ph * 0.75; sy += 8) { ctx.fillRect(signEdgeX + 2, sy, 4, 4); }
-      ctx.shadowBlur = 0;
     }
   }
 

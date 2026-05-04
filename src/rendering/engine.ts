@@ -20,19 +20,19 @@ const TILE = 24;
 const cols = Math.floor(W / TILE) + 1;
 const rows = Math.floor(H / TILE) + 1;
 
-// Camera state
-let camX = W / 2;
-let camY = H / 2;
-let camZoom = 1.0;
+// Camera state (attached to window for injectJavaScript access)
+window.camX = W / 2;
+window.camY = H / 2;
+window.camZoom = 1.0;
 const CAM_ZOOM_MIN = 0.4;
 const CAM_ZOOM_MAX = 1.2;
 
 // Player world position (pixels)
-let playerWorldX = W / 2;
-let playerWorldY = H / 2;
-let playerTargetX = W / 2;
-let playerTargetY = H / 2;
-let playerMoving = false;
+window.playerWorldX = W / 2;
+window.playerWorldY = H / 2;
+window.playerTargetX = W / 2;
+window.playerTargetY = W / 2;
+window.playerMoving = false;
 
 function initPRNG(location) {
   let seedState = 0;
@@ -131,8 +131,8 @@ function applyCameraTransform(ctx) {
   ctx.clearRect(0, 0, viewW, viewH);
   ctx.save();
   ctx.translate(viewW / 2, viewH / 2);
-  ctx.scale(camZoom, camZoom);
-  ctx.translate(-camX, -camY);
+  ctx.scale(window.camZoom, window.camZoom);
+  ctx.translate(-window.camX, -window.camY);
 }
 
 function restoreCameraTransform(ctx) {
@@ -141,35 +141,45 @@ function restoreCameraTransform(ctx) {
 
 function updateCamera() {
   // Smoothly follow player
-  camX += (playerWorldX - camX) * 0.1;
-  camY += (playerWorldY - camY) * 0.1;
+  window.camX += (window.playerWorldX - window.camX) * 0.1;
+  window.camY += (window.playerWorldY - window.camY) * 0.1;
   // Clamp camera to world bounds
-  const hw = (canvas.width / 2) / camZoom;
-  const hh = (canvas.height / 2) / camZoom;
-  camX = Math.max(hw, Math.min(W - hw, camX));
-  camY = Math.max(hh, Math.min(H - hh, camY));
+  const hw = (canvas.width / 2) / window.camZoom;
+  const hh = (canvas.height / 2) / window.camZoom;
+  
+  if (hw >= W / 2) {
+    window.camX = W / 2;
+  } else {
+    window.camX = Math.max(hw, Math.min(W - hw, window.camX));
+  }
+  
+  if (hh >= H / 2) {
+    window.camY = H / 2;
+  } else {
+    window.camY = Math.max(hh, Math.min(H - hh, window.camY));
+  }
 }
 
 function screenToWorld(sx, sy) {
   const cvs = canvas;
-  const wx = (sx - cvs.width / 2) / camZoom + camX;
-  const wy = (sy - cvs.height / 2) / camZoom + camY;
+  const wx = (sx - cvs.width / 2) / window.camZoom + window.camX;
+  const wy = (sy - cvs.height / 2) / window.camZoom + window.camY;
   return { x: wx, y: wy };
 }
 
 function updatePlayerMovement() {
-  if (!playerMoving) return;
-  const dx = playerTargetX - playerWorldX;
-  const dy = playerTargetY - playerWorldY;
+  if (!window.playerMoving) return;
+  const dx = window.playerTargetX - window.playerWorldX;
+  const dy = window.playerTargetY - window.playerWorldY;
   const dist = Math.sqrt(dx * dx + dy * dy);
   if (dist < 2) {
-    playerWorldX = playerTargetX;
-    playerWorldY = playerTargetY;
-    playerMoving = false;
+    window.playerWorldX = window.playerTargetX;
+    window.playerWorldY = window.playerTargetY;
+    window.playerMoving = false;
     return;
   }
   const speed = 3.0;
-  playerWorldX += (dx / dist) * speed;
-  playerWorldY += (dy / dist) * speed;
+  window.playerWorldX += (dx / dist) * speed;
+  window.playerWorldY += (dy / dist) * speed;
 }
 `;

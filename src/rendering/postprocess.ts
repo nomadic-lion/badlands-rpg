@@ -1,16 +1,18 @@
 /**
  * postprocess.ts — Post-Processing Effects
- * Vignette, time-of-day tinting, cartel barricades.
+ * High-res vignette, region-specific shading (Day, Afternoon, Dark).
  */
 
 export const POSTPROCESS_JS = `
 // ============================================================
-// POST-PROCESSING
+// POST-PROCESSING — Regional Shading
 // ============================================================
 
 function renderPostProcess(ctx, env) {
-  const isNight = env.isNight;
-  const isDusk = env.isDusk;
+  const loc = env.locationId;
+  const isCity = loc.includes('la_') || loc.includes('vegas');
+  const isBeach = loc.includes('venice');
+  const isMichoacan = loc.includes('michoacan');
 
   // Cartel barricades
   if (env.isCartelBase) {
@@ -22,21 +24,31 @@ function renderPostProcess(ctx, env) {
     }
   }
 
-  // Vignette
+  // Deep Vignette for AAA feel
   const vignette = ctx.createRadialGradient(W / 2, H / 2, H / 3, W / 2, H / 2, W * 0.9);
   vignette.addColorStop(0, 'rgba(0,0,0,0)');
   vignette.addColorStop(1, 'rgba(0,0,0,0.85)');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, W, H);
 
-  // Time-of-day tint
-  if (isNight) {
-    ctx.fillStyle = 'rgba(6, 12, 24, 0.4)';
+  // Region-Specific Shade
+  if (isMichoacan) {
+    // Dark, gritty, scary shade
+    ctx.fillStyle = 'rgba(6, 12, 24, 0.5)';
     ctx.fillRect(0, 0, W, H);
-  } else if (isDusk) {
-    ctx.fillStyle = 'rgba(201, 164, 68, 0.2)';
+  } else if (isCity || isBeach) {
+    // Early Evening / Golden Hour Dusk - Darker for window light pop
+    ctx.fillStyle = 'rgba(12, 18, 38, 0.45)'; // Deep evening blue/indigo
+    ctx.fillRect(0, 0, W, H);
+    
+    // Slight warm sunset horizon glow
+    const sunset = ctx.createLinearGradient(0, 0, 0, H);
+    sunset.addColorStop(0, 'rgba(201, 164, 68, 0.2)');
+    sunset.addColorStop(0.4, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sunset;
     ctx.fillRect(0, 0, W, H);
   } else {
+    // Default Day shade - slightly dusty/gritty
     ctx.fillStyle = 'rgba(139, 43, 34, 0.08)';
     ctx.fillRect(0, 0, W, H);
   }

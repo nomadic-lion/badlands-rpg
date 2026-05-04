@@ -30,11 +30,11 @@ export function MapRenderer({ location, hour, onLandmarkTapped, onEnterLandmark 
   }, [onLandmarkTapped, onEnterLandmark]);
 
   const zoomIn = useCallback(() => {
-    webViewRef.current?.injectJavaScript('window.setZoom(camZoom + 0.15); true;');
+    webViewRef.current?.injectJavaScript('window.setZoom(window.camZoom + 0.15); true;');
   }, []);
 
   const zoomOut = useCallback(() => {
-    webViewRef.current?.injectJavaScript('window.setZoom(camZoom - 0.15); true;');
+    webViewRef.current?.injectJavaScript('window.setZoom(window.camZoom - 0.15); true;');
   }, []);
 
   const htmlContent = buildMapHTML(location, hour);

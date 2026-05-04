@@ -1,56 +1,71 @@
-# Welcome to your Expo app 👋
+# 🌵 Badlands RPG: Cartel Estado
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+![Badlands Banner](https://img.shields.io/badge/Release-AAA_Quality-c9a444?style=for-the-badge)
+![Expo](https://img.shields.io/badge/Expo-SDK_55-000000?style=for-the-badge&logo=expo)
+![React Native](https://img.shields.io/badge/React_Native-v0.74-61DAFB?style=for-the-badge&logo=react)
 
-## Get started
+**Badlands RPG** is a high-fidelity, open-world survival experience set in the gritty, cartel-dominated borderlands. Built with a proprietary **Volumetric Voxel Pixel Engine**, the game delivers a unique "AAA Pixel Art" aesthetic that combines the charm of retro visuals with modern depth, lighting, and procedural complexity.
 
-1. Install dependencies
+## 🚀 Key Features
 
-   ```bash
-   npm install
-   ```
+### 🎨 AAA Volumetric Pixel Engine
+*   **3D Depth Rendering:** Every building, tree, and vehicle is rendered as a volumetric voxel block, providing consistent lighting and perspective.
+*   **Dynamic Day/Night Cycle:** Realistic lighting shifts with hue-shifting shadows and glowing neon accents that activate at dusk.
+*   **Retro Dithering:** Hand-crafted dithering algorithms create organic textures for dirt, grass, and weathered concrete.
 
-2. Start the app
+### 🗺️ Procedural World Generation
+*   **Regional Ecosystems:** Distinct biomes including the **Sinaloa Mountains** (poppy plantations), **Michoacán Forest** (dense foliage), and **Tijuana Slums** (gritty urban shacks).
+*   **Landmarks:** Hand-crafted, high-resolution landmarks like the **Rooster Fighting Pit**, **Cartel Ranches**, and **Vegas Casinos**.
+*   **Infinite Variety:** No two sectors are identical, with procedurally generated road networks, street props, and vehicle wrecks.
 
-   ```bash
-   npx expo start
-   ```
+### 📱 Professional UI/UX
+*   **Adaptive HUD:** A responsive interface that scales from mobile handsets to desktop displays.
+*   **Cinematic Rotation:** Seamlessly switches to a full-screen, minimalist "Cinematic Mode" in landscape orientation to maximize immersion.
+*   **Deep Systems:** Integrated inventory, crafting, and scavenging mechanics.
 
-In the output, you'll find options to open the app in a
+## 🛠️ Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+*   **Framework:** [Expo](https://expo.dev/) (React Native)
+*   **Core Logic:** TypeScript
+*   **Rendering:** Custom HTML5 Canvas Engine (WebView-based)
+*   **Icons:** Lucide-React-Native
+*   **State Management:** Custom React Hooks & Context
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📦 Installation & Setup
 
-## Get a fresh project
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-repo/badlands-rpg.git
+    cd badlands-rpg/expo-badlands-rpg
+    ```
 
-When you're ready, run:
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-```bash
-npm run reset-project
+3.  **Start the development server:**
+    ```bash
+    npx expo start
+    ```
+
+4.  **Run on your device:**
+    Scan the QR code with the **Expo Go** app (Android) or **Camera app** (iOS).
+
+## 📂 Project Structure
+
+```text
+src/
+├── app/              # Expo Router pages
+├── components/       # Reusable UI components
+├── hooks/            # Game logic & state hooks
+├── lib/              # Constants, types, and utilities
+└── rendering/        # The Voxel/Pixel Engine
+    ├── pixelEngine.ts   # Core volumetric drawing tools
+    ├── landmarks.ts     # Landmark-specific assets
+    └── nature.ts        # Procedural environment assets
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📜 License
 
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+© 2026 Badlands RPG Team. All rights reserved. Professional Grade Production.

@@ -1,18 +1,23 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, useWindowDimensions, StatusBar, Alert, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGameState } from '../hooks/useGameState';
 import { Backpack, Map, Search, Footprints, ShieldAlert, Drumstick, Droplets, Hammer, Skull, Crosshair } from 'lucide-react-native';
 import { ITEMS } from '../lib/constants';
 import { RECIPES } from '../lib/crafting';
 import { MapRenderer } from '../components/MapRenderer';
+import { WorldMap } from '../components/WorldMap';
+import { PLAYER_AVATAR_B64 } from '../rendering/assets';
 
-const { width } = Dimensions.get('window');
+
 
 export default function App() {
   const { state, searchLocation, useItem, travel, craftItem, resetGame } = useGameState();
   const [currentView, setCurrentView] = useState<'location' | 'world' | 'inventory' | 'crafting'>('location');
+  const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const isLandscape = width > height;
+  const isDesktop = width > 1024; // Tablets and Desktop
 
   const handleLandmarkTapped = useCallback((id: string, name: string) => {
     // Landmark tapped — tooltip shown in WebView canvas
@@ -52,9 +57,9 @@ export default function App() {
     switch (currentView) {
       case 'location':
         return (
-          <View style={styles.viewContainer}>
-            {/* Map Section */}
-            <View style={styles.mapSection}>
+          <View style={[styles.viewContainer, (isDesktop || isLandscape) && styles.viewContainerResponsive]}>
+            {/* Map Section — dominates the screen */}
+            <View style={[styles.mapSection, !(isDesktop || isLandscape) && styles.mapSectionMobile]}>
               <MapRenderer 
                 location={currentLocation} 
                 hour={state.hour}
@@ -68,32 +73,38 @@ export default function App() {
               </View>
             </View>
 
-            {/* Sidebar / Bottom Section */}
-            <View style={styles.sidebarSection}>
-              {/* Event Log */}
-              <View style={styles.eventLogContainer}>
-                <Text style={styles.eventLogLabel}>Event Log</Text>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.eventLogScroll}>
-                  {state.logs.slice().reverse().map((log, i) => {
-                    let color = '#d4c5b0';
-                    if (log.type === 'warning' || log.type === 'combat') color = '#8b2b22';
-                    if (log.type === 'loot') color = 'rgba(212, 197, 176, 0.8)';
-                    if (log.type === 'info') color = 'rgba(201, 164, 68, 0.5)';
+            {/* Panel below the map — single ScrollView for Event Log + Scavenge */}
+            <ScrollView 
+              style={[styles.panelSection, !(isDesktop || isLandscape) && styles.panelSectionMobile]}
+              contentContainerStyle={styles.panelContent}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+            >
+              {/* Event Log — Professional High-Tech Terminal Style */}
+              <View style={styles.eventLogSection}>
+                <View style={styles.eventLogHeader}>
+                  <Text style={styles.eventLogLabel}>COMMUNICATIONS_LOG_ENCRYPTED</Text>
+                  <View style={styles.eventLogStatusIndicator} />
+                </View>
+                {state.logs.map((log) => {
+                  let color = '#d4c5b0';
+                  if (log.type === 'warning' || log.type === 'combat') color = '#8b2b22';
+                  if (log.type === 'loot') color = '#c9a444';
+                  if (log.type === 'info') color = 'rgba(212, 197, 176, 0.7)';
 
-                    return (
-                      <View key={log.id} style={[styles.logEntry, { borderLeftColor: color }]}>
-                        <Text style={styles.logTime}>[{new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })}]</Text>
-                        <Text style={[styles.logText, { color }]} numberOfLines={2}>{log.message}</Text>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
+                  return (
+                    <View key={log.id} style={[styles.logEntry, { borderLeftColor: color }]}>
+                      <Text style={styles.logTime}>{new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}</Text>
+                      <Text style={[styles.logText, { color }]}>{log.message}</Text>
+                    </View>
+                  );
+                })}
               </View>
 
               {/* Scavengable Areas */}
-              <ScrollView style={styles.scavengeContainer} contentContainerStyle={styles.scavengeContent}>
+              <View style={styles.scavengeSection}>
                 <View style={styles.scavengeHeader}>
-                  <Text style={styles.scavengeHeaderTitle}>Scavengable Areas</Text>
+                  <Text style={styles.scavengeHeaderTitle}>SCAVENGABLE AREAS</Text>
                   <Text style={styles.scavengeHeaderCount}>{currentLocation?.subLocations.length} locations</Text>
                 </View>
                 
@@ -119,41 +130,21 @@ export default function App() {
                     </TouchableOpacity>
                   </View>
                 ))}
-              </ScrollView>
-            </View>
+              </View>
+            </ScrollView>
           </View>
         );
 
       case 'world':
         return (
-          <ScrollView style={styles.worldContainer} contentContainerStyle={styles.worldContent}>
-            <Text style={styles.pageTitle}>World Map</Text>
-            {state.locations.filter(l => l.id !== state.currentLocationId).map(loc => {
-              const distance = Math.max(1, Math.floor(Math.sqrt(Math.pow(loc.x - (currentLocation?.x || 0), 2) + Math.pow(loc.y - (currentLocation?.y || 0), 2))));
-              const cost = distance * 5;
-              return (
-                <TouchableOpacity 
-                  key={loc.id} 
-                  onPress={() => { travel(loc.id); setCurrentView('location'); }}
-                  style={styles.locationCard}
-                >
-                  <View style={styles.locationCardHeader}>
-                    <Text style={styles.locationCardTitle}>{loc.name}</Text>
-                    <View style={styles.distanceBadge}>
-                      <Text style={styles.distanceText}>{distance}km</Text>
-                    </View>
-                  </View>
-                  <View style={styles.locationCardFooter}>
-                    <Text style={styles.locationCardType}>{loc.type.replace('_', ' ').toUpperCase()}</Text>
-                    <View style={styles.costBadge}>
-                      <Footprints size={12} color="#4a6344" style={{ marginRight: 4 }} />
-                      <Text style={styles.costText}>{cost} Eng</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          <WorldMap 
+            locations={state.locations} 
+            currentLocationId={state.currentLocationId}
+            onTravel={(id) => {
+              travel(id);
+              setCurrentView('location');
+            }}
+          />
         );
 
       case 'inventory':
@@ -179,14 +170,23 @@ export default function App() {
                   const isConsumable = !!item.health || !!item.hunger || !!item.thirst || !!item.energy;
                   
                   return (
-                    <View key={id} style={styles.itemCard}>
-                      <View style={styles.itemCardHeader}>
-                        <Text style={styles.itemCardTitle} numberOfLines={1}>{item.name}</Text>
-                        <View style={styles.qtyBadge}>
-                          <Text style={styles.qtyText}>x{qty}</Text>
+                    <View key={id} style={[styles.itemCard, isDesktop && styles.itemCardDesktop]}>
+                      <View style={styles.itemCardContent}>
+                        {item.image && (
+                          <View style={styles.itemImageContainer}>
+                            <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="contain" />
+                          </View>
+                        )}
+                        <View style={styles.itemTextContainer}>
+                          <View style={styles.itemCardHeader}>
+                            <Text style={styles.itemCardTitle} numberOfLines={1}>{item.name}</Text>
+                            <View style={styles.qtyBadge}>
+                              <Text style={styles.qtyText}>x{qty}</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.itemCardDesc} numberOfLines={2}>{item.description}</Text>
                         </View>
                       </View>
-                      <Text style={styles.itemCardDesc} numberOfLines={2}>{item.description}</Text>
                       {isConsumable ? (
                         <TouchableOpacity 
                           onPress={() => useItem(id)}
@@ -262,14 +262,21 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" hidden={isLandscape && currentView === 'location'} />
       
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      {/* HEADER - Hidden in landscape Sector view */}
+      {!(isLandscape && currentView === 'location') && (
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerTop}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoBox}><Text style={styles.logoBoxText}>C</Text></View>
-            <Text style={styles.logoText}>CARTEL ESTADO: <Text style={styles.logoTextHighlight}>NARCO RPG</Text></Text>
+          <View style={styles.playerInfo}>
+            <View style={styles.portraitContainer}>
+              <Image source={{ uri: PLAYER_AVATAR_B64 }} style={styles.portrait} />
+              <View style={styles.portraitBorder} />
+            </View>
+            <View style={styles.playerNameContainer}>
+              <Text style={styles.playerLabel}>OPERATIVE_ID</Text>
+              <Text style={styles.playerName}>{state.playerName}</Text>
+            </View>
           </View>
           <View style={styles.timeContainer}>
             <Text style={styles.timeText}>{String(state.hour).padStart(2, '0')}:00</Text>
@@ -284,30 +291,33 @@ export default function App() {
           <StatBar label="Thirst" value={state.stats.thirst} max={state.stats.maxThirst} color="#426477" />
         </View>
       </View>
+      )}
 
       {/* MAIN VIEW */}
       <View style={styles.main}>
         {renderView()}
       </View>
 
-      {/* BOTTOM NAV */}
-      <View style={[styles.nav, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        {navItems.map(item => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-          return (
-            <TouchableOpacity 
-              key={item.id}
-              style={styles.navButton}
-              onPress={() => setCurrentView(item.id as any)}
-            >
-              {isActive && <View style={styles.navActiveIndicator} />}
-              <Icon size={isActive ? 24 : 20} color={isActive ? '#c9a444' : 'rgba(212,197,176,0.4)'} />
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {/* BOTTOM NAV - Hidden in landscape Sector view */}
+      {!(isLandscape && currentView === 'location') && (
+        <View style={[styles.nav, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+          {navItems.map(item => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            return (
+              <TouchableOpacity 
+                key={item.id}
+                style={styles.navButton}
+                onPress={() => setCurrentView(item.id as any)}
+              >
+                {isActive && <View style={styles.navActiveIndicator} />}
+                <Icon size={isActive ? 24 : 20} color={isActive ? '#c9a444' : 'rgba(212,197,176,0.4)'} />
+                <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -336,11 +346,14 @@ const styles = StyleSheet.create({
   
   header: { backgroundColor: '#0f0d0b', borderBottomWidth: 1, borderBottomColor: '#3d3228', paddingHorizontal: 16, paddingBottom: 12 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  logoContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoBox: { width: 32, height: 32, backgroundColor: '#c9a444', borderRadius: 4, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  logoBoxText: { color: 'black', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 16 },
-  logoText: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 14, letterSpacing: 1 },
-  logoTextHighlight: { color: '#c9a444' },
+  playerInfo: { flexDirection: 'row', alignItems: 'center' },
+  portraitContainer: { width: 44, height: 44, position: 'relative', marginRight: 12 },
+  portrait: { width: '100%', height: '100%', borderRadius: 22, backgroundColor: '#1a1612' },
+  portraitBorder: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 22, borderWidth: 1.5, borderColor: '#c9a444', opacity: 0.8 },
+  playerNameContainer: { justifyContent: 'center' },
+  playerLabel: { color: 'rgba(201,164,68,0.5)', fontFamily: 'JetBrainsMono_Bold', fontSize: 8, letterSpacing: 1, marginBottom: 2 },
+  playerName: { color: '#d4c5b0', fontFamily: 'Anton', fontSize: 18, letterSpacing: 1 },
+  
   timeContainer: { alignItems: 'flex-end', borderLeftWidth: 1, borderLeftColor: '#3d3228', paddingLeft: 12 },
   timeText: { color: '#c9a444', fontFamily: 'JetBrainsMono_Bold', fontSize: 12 },
   dayText: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk', fontSize: 9, opacity: 0.6, letterSpacing: 2, marginTop: 2 },
@@ -353,34 +366,39 @@ const styles = StyleSheet.create({
 
   main: { flex: 1 },
   
-  viewContainer: { flex: 1, backgroundColor: '#13110e', flexDirection: width > 768 ? 'row' : 'column' },
-  mapSection: { height: width > 768 ? '100%' : '45%', borderBottomWidth: 1, borderBottomColor: '#3d3228', position: 'relative' },
+  viewContainer: { flex: 1, backgroundColor: '#13110e' },
+  viewContainerResponsive: { flexDirection: 'row' },
+  mapSection: { flex: 2, position: 'relative', backgroundColor: '#0f0d0b' },
+  mapSectionMobile: { flex: 3, borderBottomWidth: 1, borderBottomColor: '#3d3228' },
   mapOverlayInfo: { position: 'absolute', top: 16, left: 16, zIndex: 10 },
-  mapOverlayLabel: { color: '#c9a444', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 2, marginBottom: 4 },
-  mapOverlayTitle: { color: '#d4c5b0', fontFamily: 'Anton', fontSize: 24, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 5 },
-  mapOverlayType: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 14, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
+  mapOverlayLabel: { color: '#c9a444', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 9, letterSpacing: 2, marginBottom: 2, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
+  mapOverlayTitle: { color: '#d4c5b0', fontFamily: 'Anton', fontSize: 22, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 5 },
+  mapOverlayType: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 11, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 },
   
-  sidebarSection: { flex: 1, backgroundColor: '#13110e' },
-  eventLogContainer: { height: 160, backgroundColor: 'rgba(15,13,11,0.9)', borderBottomWidth: 1, borderBottomColor: '#3d3228', padding: 16 },
-  eventLogLabel: { color: 'rgba(201,164,68,0.4)', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 2, marginBottom: 8 },
-  eventLogScroll: { paddingBottom: 8 },
-  logEntry: { flexDirection: 'row', borderLeftWidth: 1, paddingLeft: 8, marginBottom: 8 },
-  logTime: { color: '#c9a444', fontFamily: 'JetBrainsMono', fontSize: 10, marginRight: 8 },
-  logText: { fontFamily: 'SpaceGrotesk', fontSize: 11, flex: 1 },
+  panelSection: { flex: 1, backgroundColor: '#13110e', borderLeftWidth: 1, borderLeftColor: '#3d3228' },
+  panelSectionMobile: { flex: 1.2, borderLeftWidth: 0, borderTopWidth: 1, borderTopColor: '#3d3228' },
+  panelContent: { paddingBottom: 24 },
 
-  scavengeContainer: { flex: 1, backgroundColor: '#1a1612' },
-  scavengeContent: { padding: 16 },
-  scavengeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  scavengeHeaderTitle: { color: '#c9a444', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 1 },
+  eventLogSection: { backgroundColor: 'rgba(0,0,0,0.9)', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#2a241d' },
+  eventLogHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  eventLogLabel: { color: 'rgba(201,164,68,0.6)', fontFamily: 'JetBrainsMono_Bold', fontSize: 9, letterSpacing: 1.5 },
+  eventLogStatusIndicator: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#39ff14', shadowColor: '#39ff14', shadowOpacity: 0.8, shadowRadius: 4 },
+  logEntry: { flexDirection: 'row', borderLeftWidth: 1, paddingLeft: 12, paddingVertical: 5, marginBottom: 4, alignItems: 'flex-start' },
+  logTime: { color: 'rgba(201,164,68,0.4)', fontFamily: 'JetBrainsMono', fontSize: 8, marginRight: 8, marginTop: 2 },
+  logText: { fontFamily: 'SpaceGrotesk', fontSize: 11, flex: 1, lineHeight: 15, letterSpacing: 0.2 },
+
+  scavengeSection: { padding: 14 },
+  scavengeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  scavengeHeaderTitle: { color: '#c9a444', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 2 },
   scavengeHeaderCount: { color: 'rgba(201,164,68,0.4)', fontFamily: 'SpaceGrotesk', fontSize: 9 },
   
-  scavengeCard: { backgroundColor: 'rgba(26,22,18,0.9)', borderWidth: 1, borderColor: '#4a4336', borderRadius: 4, padding: 16, marginBottom: 12 },
+  scavengeCard: { backgroundColor: 'rgba(26,22,18,0.9)', borderWidth: 1, borderColor: '#4a4336', borderRadius: 4, padding: 14, marginBottom: 10 },
   scavengeCardSearched: { backgroundColor: 'rgba(15,13,11,0.5)', borderColor: 'rgba(61,50,40,0.5)', opacity: 0.6 },
-  scavengeCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  scavengeCardTitle: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 14, flex: 1, paddingRight: 8 },
-  riskBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', borderWidth: 1, borderColor: 'rgba(139,43,34,0.5)', borderRadius: 2, paddingHorizontal: 6, paddingVertical: 4 },
-  riskText: { color: '#8b2b22', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 1, marginLeft: 4 },
-  scavengeCardDesc: { color: 'rgba(212,197,176,0.8)', fontFamily: 'SpaceGrotesk', fontSize: 12, height: 32, marginBottom: 16 },
+  scavengeCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  scavengeCardTitle: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 13, flex: 1, paddingRight: 8 },
+  riskBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', borderWidth: 1, borderColor: 'rgba(139,43,34,0.5)', borderRadius: 2, paddingHorizontal: 6, paddingVertical: 3 },
+  riskText: { color: '#8b2b22', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 9, letterSpacing: 1, marginLeft: 4 },
+  scavengeCardDesc: { color: 'rgba(212,197,176,0.8)', fontFamily: 'SpaceGrotesk', fontSize: 11, marginBottom: 12 },
   
   actionButton: { backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: 1, borderColor: '#3d3228', borderRadius: 4, paddingVertical: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   actionButtonDisabled: { backgroundColor: 'rgba(0,0,0,0.2)' },
@@ -390,15 +408,6 @@ const styles = StyleSheet.create({
   worldContainer: { flex: 1, backgroundColor: '#1a1612' },
   worldContent: { padding: 24 },
   pageTitle: { color: '#c9a444', fontFamily: 'Anton', fontSize: 32, letterSpacing: 1, borderBottomWidth: 1, borderBottomColor: '#3d3228', paddingBottom: 16, marginBottom: 24 },
-  locationCard: { backgroundColor: 'rgba(26,22,18,0.8)', borderWidth: 1, borderColor: '#3d3228', borderRadius: 4, padding: 20, marginBottom: 16 },
-  locationCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  locationCardTitle: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 18 },
-  distanceBadge: { backgroundColor: 'rgba(0,0,0,0.4)', borderWidth: 1, borderColor: '#3d3228', borderRadius: 2, paddingHorizontal: 6, paddingVertical: 4 },
-  distanceText: { color: 'rgba(201,164,68,0.6)', fontFamily: 'JetBrainsMono', fontSize: 10 },
-  locationCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(61,50,40,0.5)' },
-  locationCardType: { color: 'rgba(212,197,176,0.7)', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 12, letterSpacing: 2 },
-  costBadge: { flexDirection: 'row', alignItems: 'center' },
-  costText: { color: '#4a6344', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 10, letterSpacing: 1 },
 
   inventoryContainer: { flex: 1, backgroundColor: '#13110e' },
   inventoryContent: { padding: 24 },
@@ -408,13 +417,18 @@ const styles = StyleSheet.create({
   emptyStateText: { color: 'rgba(201,164,68,0.3)', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 14, letterSpacing: 2 },
   
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8 },
-  itemCard: { width: width > 768 ? '33.3%' : '50%', padding: 8 },
-  itemCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
-  itemCardTitle: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 14, flex: 1, paddingRight: 8 },
-  qtyBadge: { backgroundColor: 'black', borderWidth: 1, borderColor: '#3d3228', borderRadius: 2, paddingHorizontal: 6, paddingVertical: 2 },
-  qtyText: { color: '#c9a444', fontFamily: 'JetBrainsMono', fontSize: 10 },
-  itemCardDesc: { color: 'rgba(212,197,176,0.6)', fontFamily: 'SpaceGrotesk', fontSize: 12, height: 40, marginBottom: 16 },
-  itemCardFooter: { borderTopWidth: 1, borderTopColor: '#3d3228', paddingTop: 12, flexDirection: 'row', justifyContent: 'space-between' },
+  itemCard: { width: '50%', padding: 8 },
+  itemCardDesktop: { width: '33.3%' },
+  itemCardContent: { flexDirection: 'row', backgroundColor: 'rgba(26,22,18,0.5)', padding: 8, borderRadius: 4, marginBottom: 8, borderWidth: 1, borderColor: '#3d3228' },
+  itemImageContainer: { width: 48, height: 48, backgroundColor: '#000', borderRadius: 4, marginRight: 10, padding: 4, justifyContent: 'center', alignItems: 'center' },
+  itemImage: { width: '100%', height: '100%' },
+  itemTextContainer: { flex: 1 },
+  itemCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  itemCardTitle: { color: '#d4c5b0', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 13, flex: 1, paddingRight: 4 },
+  qtyBadge: { backgroundColor: 'black', borderWidth: 1, borderColor: '#3d3228', borderRadius: 2, paddingHorizontal: 4, paddingVertical: 1 },
+  qtyText: { color: '#c9a444', fontFamily: 'JetBrainsMono', fontSize: 9 },
+  itemCardDesc: { color: 'rgba(212,197,176,0.6)', fontFamily: 'SpaceGrotesk', fontSize: 10, height: 30 },
+  itemCardFooter: { borderTopWidth: 1, borderTopColor: '#3d3228', paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' },
   itemCardFooterText: { color: 'rgba(201,164,68,0.4)', fontFamily: 'SpaceGrotesk_SemiBold', fontSize: 9, letterSpacing: 2 },
   itemCardFooterValue: { color: '#d4c5b0', fontFamily: 'JetBrainsMono', fontSize: 10 },
 

@@ -11,6 +11,7 @@ export interface Item {
   energy?: number;
   hunger?: number;
   thirst?: number;
+  image?: string;
 }
 
 export interface PlayerStats {
@@ -47,6 +48,7 @@ export interface LandmarkBuilding {
 export interface GameLocation {
   id: string;
   name: string;
+  description: string;
   x: number;
   y: number;
   type: 'ruins' | 'cartel_base' | 'safezone' | 'gas_station' | 'rural_mountains' | 'rural_forest' | 'city_la' | 'city_vegas';
@@ -69,4 +71,5 @@ export interface GameState {
   hour: number;
   logs: LogEntry[];
   locations: GameLocation[];
+  playerName: string;
 }

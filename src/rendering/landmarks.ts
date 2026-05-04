@@ -1,75 +1,24 @@
 /**
  * landmarks.ts — 5 Unique Landmark Building Renderers
- * Each building is a hand-crafted pixel art function with extreme detail.
+ * Each building is a hand-crafted, high-resolution top-down 2D structure
+ * featuring detailed textures, deep shadows, and gritty assets.
  */
 
 export const LANDMARKS_JS = `
 // ============================================================
-// LANDMARK BUILDINGS — High-Resolution Pixel Art Replacements
+// LANDMARK BUILDINGS — High-Resolution AAA 2D Top-Down
 // ============================================================
 
-const landmarkHitAreas = [];
-
-function drawPixelBlock(ctx, x, y, w, d, h, colors) {
-  if (colors.groundShadow) {
-    ctx.fillStyle = colors.groundShadow;
-    ctx.fillRect(x + w, y - h/2, h/2, h/2); 
-    ctx.fillRect(x + h/2, y, w, d/2);
-  }
-
-  if (h > 0) {
-    ctx.fillStyle = colors.front;
-    ctx.fillRect(x, y - h, w, h);
-    if (colors.highlight) {
-      ctx.fillStyle = colors.highlight;
-      ctx.fillRect(x, y - h, 2, h); 
-      ctx.fillRect(x, y - h, w, 2); 
-    }
-    if (colors.shadow) {
-      ctx.fillStyle = colors.shadow;
-      ctx.fillRect(x + w - 2, y - h, 2, h); 
-      ctx.fillRect(x, y - 2, w, 2); 
-    }
-  }
-
-  if (d > 0) {
-    ctx.fillStyle = colors.top;
-    ctx.fillRect(x, y - h - d, w, d);
-    if (colors.highlight) {
-      ctx.fillStyle = colors.highlight;
-      ctx.fillRect(x, y - h - d, w, 2); 
-      ctx.fillRect(x, y - h - d, 2, d); 
-    }
-    if (colors.shadow) {
-      ctx.fillStyle = colors.shadow;
-      ctx.fillRect(x + w - 2, y - h - d, 2, d); 
-      ctx.fillRect(x, y - h - 2, w, 2); 
-    }
-  }
-}
-
-function fillDither(ctx, x, y, w, h, color1, color2) {
-  ctx.fillStyle = color1;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = color2;
-  for (let dy = 0; dy < h; dy += 2) {
-    for (let dx = (dy % 4 === 0 ? 0 : 2); dx < w; dx += 4) {
-      ctx.fillRect(x + dx, y + dy, 2, 2);
-    }
-  }
-}
-
 function renderSingleLandmark(ctx, lm, env, rng) {
-  const isNight = env.isNight;
   const px = lm.gridX * TILE;
   const py = lm.gridY * TILE;
   
   switch (lm.type) {
-    case 'drug_lab': drawDrugLab(ctx, px, py, isNight, rng); break;
-    case 'cartel_ranch': drawCartelRanch(ctx, px, py, isNight, rng); break;
-    case 'casino': drawCasino(ctx, px, py, isNight, rng); break;
-    case 'gang_hq': drawGangHQ(ctx, px, py, isNight, rng); break;
-    case 'rooster_pit': drawRoosterPit(ctx, px, py, isNight, rng); break;
+    case 'drug_lab': drawDrugLab(ctx, px, py, env, rng); break;
+    case 'cartel_ranch': drawCartelRanch(ctx, px, py, env, rng); break;
+    case 'casino': drawCasino(ctx, px, py, env, rng); break;
+    case 'gang_hq': drawGangHQ(ctx, px, py, env, rng); break;
+    case 'rooster_pit': drawRoosterPit(ctx, px, py, env, rng); break;
   }
   
   if (!landmarkHitAreas.find(h => h.id === lm.id)) {
@@ -77,273 +26,291 @@ function renderSingleLandmark(ctx, lm, env, rng) {
   }
 }
 
-const palConcrete = { top: '#b8b5b0', front: '#8c8a86', highlight: '#d6d3cc', shadow: '#5c5b59', groundShadow: 'rgba(0,0,0,0.6)' };
-const palConcreteNight = { top: '#4a4e54', front: '#2e3136', highlight: '#5f646b', shadow: '#1a1c1f', groundShadow: 'rgba(0,0,0,0.8)' };
-
-const palWood = { top: '#9c6f44', front: '#6e4b2a', highlight: '#c49160', shadow: '#422a14', groundShadow: 'rgba(0,0,0,0.6)' };
-const palWoodNight = { top: '#3d3024', front: '#261c14', highlight: '#544232', shadow: '#120d09', groundShadow: 'rgba(0,0,0,0.8)' };
-
-const palAdobe = { top: '#d1a775', front: '#a68051', highlight: '#f0c48d', shadow: '#785934', groundShadow: 'rgba(0,0,0,0.5)' };
-const palAdobeNight = { top: '#544534', front: '#3b2f21', highlight: '#6e5a44', shadow: '#211a12', groundShadow: 'rgba(0,0,0,0.8)' };
-
-const palRoof = { top: '#ad4b3b', front: '#823427', highlight: '#d1624f', shadow: '#592016' };
-const palRoofNight = { top: '#47211b', front: '#2e130f', highlight: '#612e26', shadow: '#170806' };
-
-const palGold = { top: '#ffd700', front: '#b8860b', highlight: '#ffea70', shadow: '#8b6508', groundShadow: 'rgba(0,0,0,0.7)' };
-const palGoldNight = { top: '#8a7500', front: '#543d00', highlight: '#b39800', shadow: '#2e2100', groundShadow: 'rgba(0,0,0,0.9)' };
-
-const getPal = (palDay, palNight, isNight) => isNight ? palNight : palDay;
-
-const drawCar = (ctx, cx, cy, type, color, isNight) => {
-  ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(cx, cy - 2, 48, 20); 
-  let w = 46, h = 18, cbw = 28, cbh = 10, cbx = 8;
-  if (type === 'pickup') { cbw = 16; } 
-  if (type === 'suv') { cbw = 34; h = 20; cbh = 12; }
-  if (type === 'lowrider') { h = 14; cbh = 8; }
-
-  ctx.fillStyle = color; ctx.fillRect(cx, cy - h, w, h);
-  ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.15; ctx.fillRect(cx, cy - h, w, 2); ctx.globalAlpha = 1.0;
-  ctx.fillStyle = '#111'; ctx.fillRect(cx + cbx, cy - h - cbh, cbw, cbh);
-  
-  ctx.fillStyle = isNight ? '#0a0a0a' : '#426477';
-  ctx.fillRect(cx + cbx + 2, cy - h - cbh + 2, cbw/2 - 3, cbh - 2); 
-  ctx.fillRect(cx + cbx + cbw/2 + 1, cy - h - cbh + 2, cbw/2 - 3, cbh - 2); 
-
-  ctx.fillStyle = '#050505'; 
-  ctx.fillRect(cx + 6, cy - 4, 10, 8);
-  ctx.fillRect(cx + w - 16, cy - 4, 10, 8);
-  
-  ctx.fillStyle = (type === 'lowrider') ? '#c9a444' : '#888';
-  ctx.fillRect(cx + 8, cy - 2, 6, 4);
-  ctx.fillRect(cx + w - 14, cy - 2, 6, 4);
-
-  ctx.fillStyle = '#fff'; ctx.fillRect(cx + 2, cy - h + 4, 2, 6); 
-  ctx.fillStyle = '#f00'; ctx.fillRect(cx + w - 4, cy - h + 4, 2, 6); 
-  
-  if (isNight) {
-    ctx.fillStyle = '#fffae0'; ctx.globalAlpha = 0.2;
-    ctx.beginPath(); ctx.moveTo(cx, cy - h + 6); ctx.lineTo(cx - 60, cy - h - 10); ctx.lineTo(cx - 60, cy - h + 20); ctx.fill();
-    ctx.globalAlpha = 1.0;
-  }
-};
-
-const drawPole = (ctx, sx, sy, isNight) => {
-  ctx.fillStyle = '#111'; ctx.fillRect(sx, sy - 60, 4, 60);
-  ctx.fillStyle = '#333'; ctx.fillRect(sx, sy - 60, 1, 60); 
-  ctx.fillStyle = '#222'; ctx.fillRect(sx - 10, sy - 62, 24, 4); 
-  if (isNight) {
-    ctx.fillStyle = '#fff'; ctx.fillRect(sx - 8, sy - 60, 20, 2);
-    ctx.fillStyle = '#f1c40f'; ctx.globalAlpha = 0.15;
-    ctx.beginPath(); ctx.moveTo(sx + 2, sy - 58); ctx.lineTo(sx - 40, sy + 20); ctx.lineTo(sx + 44, sy + 20); ctx.fill();
-    ctx.globalAlpha = 1.0;
-  }
-};
-
 // ---- 1. DRUG LABORATORY (Michoacán) ----
-function drawDrugLab(ctx, px, py, isNight, rng) {
-  const conc = getPal(palConcrete, palConcreteNight, isNight);
-  const roof = { top: isNight ? '#2e3136' : '#8c8a86', front: isNight ? '#1a1c1f' : '#5c5b59', highlight: isNight ? '#4a4e54' : '#b8b5b0', shadow: isNight ? '#0d0f11' : '#3d3c3a' };
+function drawDrugLab(ctx, px, py, env, rng) {
+  const isMichoacan = true; // Drug lab is usually Michoacan
   
-  fillDither(ctx, px - 20, py - 10, 260, 180, isNight ? '#1c1a17' : '#524b43', isNight ? '#141210' : '#453f38');
+  // Base dirt clearing
+  drawDropShadow(ctx, px - 20, py - 10, 260, 180, 10, 0.5);
+  fillDither(ctx, px - 20, py - 10, 260, 180, '#1c1a17', '#141210');
   
-  drawPixelBlock(ctx, px, py + 120, 200, 100, 60, conc);
-  drawPixelBlock(ctx, px + 160, py + 120, 40, 40, 80, conc);
+  // Main building 3/4 perspective
+  drawDropShadow(ctx, px, py + 20, 200, 100, 15, 0.7);
+  
+  // Front Wall
+  const wallGrad = ctx.createLinearGradient(px, py + 120, px, py + 160);
+  wallGrad.addColorStop(0, '#2e3136'); wallGrad.addColorStop(1, '#1a1c1f');
+  ctx.fillStyle = wallGrad; ctx.fillRect(px, py + 120, 200, 40);
 
+  // Large industrial doors
   for(let i=0; i<3; i++) {
-    ctx.fillStyle = '#050505'; ctx.fillRect(px + 20 + i*40, py + 80, 16, 20);
-    ctx.fillStyle = '#222'; ctx.fillRect(px + 28 + i*40, py + 80, 2, 20);
-    if (isNight && rng.rand() > 0.3) {
-      ctx.fillStyle = '#39ff14'; ctx.globalAlpha = 0.3; ctx.fillRect(px + 20 + i*40, py + 80, 16, 20); ctx.globalAlpha = 1.0;
-    }
+    ctx.fillStyle = '#050505'; ctx.fillRect(px + 20 + i*40, py + 130, 24, 30);
+    ctx.fillStyle = '#111'; ctx.fillRect(px + 30 + i*40, py + 130, 4, 30);
   }
 
-  ctx.fillStyle = '#111'; ctx.fillRect(px + 100, py + 80, 24, 40);
-
-  drawPixelBlock(ctx, px - 4, py + 68, 208, 108, 4, roof);
-  for(let x = px; x < px + 200; x += 4) {
-    ctx.fillStyle = roof.shadow; ctx.fillRect(x, py - 40, 2, 104);
+  // Corrugated Metal Roof
+  const roofGrad = ctx.createLinearGradient(px, py + 20, px + 200, py + 120);
+  roofGrad.addColorStop(0, '#3d3c3a'); roofGrad.addColorStop(1, '#141210');
+  ctx.fillStyle = roofGrad; ctx.fillRect(px, py + 20, 200, 100);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 1;
+  for(let rx = 0; rx < 200; rx += 4) {
+    ctx.beginPath(); ctx.moveTo(px + rx, py + 20); ctx.lineTo(px + rx, py + 120); ctx.stroke();
   }
 
-  drawCar(ctx, px + 20, py + 150, 'pickup', '#3d3228', isNight);
-  drawCar(ctx, px + 100, py + 160, 'pickup', '#2a4020', isNight);
-  drawPole(ctx, px - 10, py + 140, isNight);
+  // Side chemical tanks
+  ctx.fillStyle = '#4a4e54';
+  ctx.beginPath(); ctx.arc(px + 220, py + 80, 20, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#2e3136'; ctx.beginPath(); ctx.arc(px + 220, py + 80, 16, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(px + 220, py + 130, 20, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1a1c1f'; ctx.beginPath(); ctx.arc(px + 220, py + 130, 16, 0, Math.PI*2); ctx.fill();
 
-  for(let b=0; b<6; b++) {
-    const bx = px + 170 + (b%3)*10; const by = py + 140 + Math.floor(b/3)*10;
-    ctx.fillStyle = '#111'; ctx.fillRect(bx, by-8, 8, 10);
-    ctx.fillStyle = '#0055aa'; ctx.fillRect(bx, by-8, 6, 10);
-    ctx.fillStyle = '#fff'; ctx.fillRect(bx+2, by-8, 2, 10);
-    ctx.fillStyle = '#111'; ctx.fillRect(bx, by-6, 8, 2); ctx.fillRect(bx, by-2, 8, 2);
+  // Acid spills / Garbage area (replaces the bugged grit square)
+  const gx = px + 200;
+  const gy = py + 60;
+  const gw = 60;
+  const gh = 100;
+  
+  // Toxic sludge puddles
+  ctx.fillStyle = 'rgba(57, 255, 20, 0.3)';
+  for(let i=0; i<3; i++) {
+    const rx = gx + rng.randInt(5, 40);
+    const ry = gy + rng.randInt(5, 70);
+    const rs = rng.randInt(10, 25);
+    ctx.beginPath(); ctx.arc(rx, ry, rs, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#39ff14'; ctx.beginPath(); ctx.arc(rx, ry, rs*0.4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(57, 255, 20, 0.3)';
   }
+
+  // Scattered barrels
+  const drawBarrel = (bx, by, color) => {
+    drawDropShadow(ctx, bx - 6, by - 4, 12, 12, 4, 0.5);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(bx, by, 8, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.stroke();
+    // Rim
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath(); ctx.arc(bx, by, 6, 0, Math.PI*2); ctx.stroke();
+  };
+
+  drawBarrel(gx + 15, gy + 20, '#1a3b4d'); // Blue chemical barrel
+  drawBarrel(gx + 40, gy + 45, '#8b2b22'); // Rusty red barrel
+  drawBarrel(gx + 20, gy + 80, '#c9a444'); // Yellow barrel
+
+  // Wooden crates
+  const drawCrate = (cx, cy) => {
+    drawDropShadow(ctx, cx, cy, 18, 18, 5, 0.5);
+    ctx.fillStyle = '#4a3d2b'; ctx.fillRect(cx, cy, 18, 18);
+    ctx.strokeStyle = '#2a1e14'; ctx.lineWidth = 1.5; ctx.strokeRect(cx + 2, cy + 2, 14, 14);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 18, cy + 18); ctx.stroke();
+  };
+
+  drawCrate(gx + 30, gy + 10);
+  drawCrate(gx + 10, gy + 50);
+
+  drawCarTopDown(ctx, px + 40, py + 180, 'pickup', '#3d3228', 0.2, false, rng);
+  drawCarTopDown(ctx, px + 120, py + 175, 'suv', '#2a4020', -0.1, false, rng);
+  drawPole(ctx, px - 10, py + 140, false);
 }
 
 // ---- 2. CARTEL RANCH (Sinaloa) ----
-function drawCartelRanch(ctx, px, py, isNight, rng) {
-  const adobe = getPal(palAdobe, palAdobeNight, isNight);
-  const rT = getPal(palRoof, palRoofNight, isNight);
-  
-  fillDither(ctx, px, py, 240, 180, isNight ? '#1e1a14' : '#c9b888', isNight ? '#14110d' : '#b5a57a');
+function drawCartelRanch(ctx, px, py, env, rng) {
+  // Courtyard dirt - Dusty, desaturated
+  drawDropShadow(ctx, px, py, 240, 180, 20, 0.6);
+  fillDither(ctx, px, py, 240, 180, '#8c7e6c', '#5c5448');
 
-  drawPixelBlock(ctx, px, py + 180, 240, 6, 20, adobe);
-  drawPixelBlock(ctx, px, py + 180, 6, 180, 20, adobe);
-  drawPixelBlock(ctx, px + 234, py + 180, 6, 180, 20, adobe);
-  drawPixelBlock(ctx, px, py + 6, 240, 6, 20, adobe);
+  // Adobe Walls (Courtyard perimeter) - Desaturated clay
+  const adobeWall = '#7d6345';
+  ctx.fillStyle = adobeWall;
+  ctx.fillRect(px, py + 170, 240, 10); // Bottom wall
+  ctx.fillRect(px, py, 10, 180); // Left wall
+  ctx.fillRect(px + 230, py, 10, 180); // Right wall
+  ctx.fillRect(px, py, 240, 10); // Top wall
 
-  drawPixelBlock(ctx, px, py + 20, 20, 20, 40, adobe);
-  drawPixelBlock(ctx, px + 220, py + 180, 20, 20, 40, adobe);
+  // Main Hacienda Building
+  drawDropShadow(ctx, px + 20, py + 20, 200, 80, 15, 0.5);
+  const haciendaWallGrad = ctx.createLinearGradient(px + 20, py + 80, px + 20, py + 100);
+  haciendaWallGrad.addColorStop(0, '#7d6345'); haciendaWallGrad.addColorStop(1, '#3d3021');
+  ctx.fillStyle = haciendaWallGrad; ctx.fillRect(px + 20, py + 80, 200, 20);
 
-  drawPixelBlock(ctx, px + 40, py + 100, 160, 60, 40, adobe);
-  drawPixelBlock(ctx, px + 36, py + 64, 168, 68, 4, rT); 
-
-  for(let w=0; w<4; w++) {
-    const wx = px + 60 + w*30;
-    ctx.fillStyle = '#111'; ctx.fillRect(wx, py + 70, 12, 16);
-    if(isNight && rng.rand() > 0.4) {
-      ctx.fillStyle = '#e8c860'; ctx.fillRect(wx+1, py + 71, 10, 14);
-    }
+  // Arches
+  ctx.fillStyle = '#0a0806';
+  for(let w=0; w<5; w++) {
+    const wx = px + 40 + w*32;
+    ctx.beginPath(); ctx.arc(wx + 8, py + 86, 8, Math.PI, 0); ctx.fill();
+    ctx.fillRect(wx, py + 86, 16, 14);
   }
 
-  ctx.fillStyle = '#222'; ctx.fillRect(px + 100, py + 160, 40, 20);
-  ctx.fillStyle = '#b8860b'; ctx.fillRect(px + 100, py + 160, 40, 2);
+  // Terracotta Roof - Deep, weathered red
+  const roofGrad = ctx.createLinearGradient(px + 20, py + 20, px + 220, py + 80);
+  roofGrad.addColorStop(0, '#7d382d'); roofGrad.addColorStop(1, '#3d1c16');
+  ctx.fillStyle = roofGrad; ctx.fillRect(px + 20, py + 20, 200, 60);
+  
+  // Roof tiles
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+  for(let rx = 0; rx < 200; rx += 6) {
+    ctx.beginPath(); ctx.moveTo(px + 20 + rx, py + 20); ctx.lineTo(px + 20 + rx, py + 80); ctx.stroke();
+  }
 
-  drawCar(ctx, px + 30, py + 130, 'suv', '#111', isNight);
-  drawCar(ctx, px + 150, py + 140, 'suv', '#333', isNight);
-  drawPole(ctx, px + 120, py + 180, isNight);
+  // Details
+  ctx.fillStyle = '#2d3d2d'; ctx.beginPath(); ctx.arc(px + 120, py + 130, 15, 0, Math.PI*2); ctx.fill(); // fountain base
+  ctx.fillStyle = '#4a7b8f'; ctx.beginPath(); ctx.arc(px + 120, py + 130, 10, 0, Math.PI*2); ctx.fill(); // water
+
+  drawCarTopDown(ctx, px + 60, py + 150, 'suv', '#111', 0, false, rng);
+  drawCarTopDown(ctx, px + 180, py + 140, 'pickup', '#222', Math.PI/4, false, rng);
 }
 
 // ---- 3. CASINO (Las Vegas) ----
-function drawCasino(ctx, px, py, isNight, rng) {
-  const gold = getPal(palGold, palGoldNight, isNight);
-  
-  fillDither(ctx, px - 10, py + 20, 280, 180, isNight ? '#111' : '#444', isNight ? '#0a0a0a' : '#333');
+function drawCasino(ctx, px, py, env, rng) {
+  drawDropShadow(ctx, px, py + 20, 260, 140, 30, 0.8);
 
-  drawPixelBlock(ctx, px, py + 140, 260, 120, 40, gold);
-  drawPixelBlock(ctx, px + 20, py + 100, 220, 100, 80, gold);
-  drawPixelBlock(ctx, px + 60, py + 20, 140, 80, 120, gold);
+  // Base tier
+  const gold1 = ctx.createLinearGradient(px, py + 120, px + 260, py + 160);
+  gold1.addColorStop(0, '#b8860b'); gold1.addColorStop(1, '#543d00');
+  ctx.fillStyle = gold1; ctx.fillRect(px, py + 120, 260, 40);
+  ctx.fillStyle = '#ffd700'; ctx.fillRect(px, py + 20, 260, 100);
 
-  for(let row=0; row<10; row++) {
-    for(let col=0; col<8; col++) {
-      const wx = px + 70 + col*16; const wy = py - 10 + row*12;
-      ctx.fillStyle = '#111'; ctx.fillRect(wx, wy, 8, 8);
-      if(isNight) {
-        ctx.fillStyle = rng.randChoice(['#ffeaa7', '#f1c40f', '#e67e22', '#00ffcc', '#ff00ff']);
-        ctx.globalAlpha = rng.rand() > 0.3 ? 0.8 : 0.2;
-        ctx.fillRect(wx, wy, 8, 8); ctx.globalAlpha = 1.0;
-      }
-    }
+  // Second tier
+  drawDropShadow(ctx, px + 20, py, 220, 100, 20, 0.6);
+  const gold2 = ctx.createLinearGradient(px + 20, py + 80, px + 240, py + 120);
+  gold2.addColorStop(0, '#8a7500'); gold2.addColorStop(1, '#2e2100');
+  ctx.fillStyle = gold2; ctx.fillRect(px + 20, py + 80, 220, 40);
+  ctx.fillStyle = '#ffea70'; ctx.fillRect(px + 20, py - 20, 220, 100);
+
+  // Glass roof / Atrium
+  ctx.fillStyle = '#112233'; ctx.fillRect(px + 60, py - 40, 140, 80);
+  ctx.strokeStyle = '#2a5b7d'; ctx.lineWidth = 2;
+  for(let x=0; x<140; x+=20) {
+    ctx.beginPath(); ctx.moveTo(px + 60 + x, py - 40); ctx.lineTo(px + 60 + x, py + 40); ctx.stroke();
   }
 
-  drawPixelBlock(ctx, px + 90, py + 160, 80, 40, 20, gold);
-  ctx.fillStyle = '#111'; ctx.fillRect(px + 100, py + 140, 60, 20);
+  // Neon Marquee
+  ctx.fillStyle = '#000'; ctx.fillRect(px + 40, py + 150, 180, 20);
+  ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.strokeRect(px + 42, py + 152, 176, 16);
+  ctx.fillStyle = '#ffff00'; ctx.font = 'bold 12px monospace';
+  ctx.fillText('CASINO ROYALE', px + 65, py + 164);
 
-  ctx.fillStyle = '#000'; ctx.fillRect(px + 40, py - 40, 180, 30);
-  if(isNight) {
-    ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 10;
-    ctx.strokeRect(px + 42, py - 38, 176, 26);
-    ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#ffff00'; ctx.font = 'bold 14px monospace';
-    ctx.fillText('CASINO ROYALE', px + 65, py - 20); ctx.shadowBlur = 0;
-  } else {
-    ctx.fillStyle = '#b8860b'; ctx.font = 'bold 14px monospace';
-    ctx.fillText('CASINO ROYALE', px + 65, py - 20);
-  }
-
-  drawCar(ctx, px - 20, py + 170, 'sedan', '#111', isNight);
-  drawCar(ctx, px + 230, py + 170, 'lowrider', '#8b2b22', isNight);
-  drawPole(ctx, px + 70, py + 180, isNight);
-  drawPole(ctx, px + 190, py + 180, isNight);
+  drawCarTopDown(ctx, px - 10, py + 180, 'sedan', '#111', -Math.PI/6, false, rng);
+  drawCarTopDown(ctx, px + 240, py + 170, 'lowrider', '#8b2b22', Math.PI/8, false, rng);
 }
 
 // ---- 4. GANG HQ (Los Angeles) ----
-function drawGangHQ(ctx, px, py, isNight, rng) {
-  const brick = { top: isNight ? '#3d2522' : '#8a4b44', front: isNight ? '#2b1816' : '#6b3630', highlight: isNight ? '#4f302b' : '#a35a52', shadow: isNight ? '#1c0f0e' : '#4d241f', groundShadow: 'rgba(0,0,0,0.7)' };
+function drawGangHQ(ctx, px, py, env, rng) {
+  drawDropShadow(ctx, px - 10, py, 250, 180, 15, 0.6);
   
-  fillDither(ctx, px - 10, py, 250, 180, isNight ? '#141414' : '#444', isNight ? '#0f0f0f' : '#333');
+  // Main Compound Building
+  const brickWall = ctx.createLinearGradient(px, py + 100, px, py + 140);
+  brickWall.addColorStop(0, '#6b3630'); brickWall.addColorStop(1, '#2b1816');
+  ctx.fillStyle = brickWall; ctx.fillRect(px, py + 100, 220, 40);
 
-  drawPixelBlock(ctx, px, py + 120, 220, 100, 80, brick);
+  // Graffiti
+  ctx.fillStyle = '#ff3333'; ctx.font = 'bold 18px "SpaceGrotesk"'; ctx.fillText('MS-13', px + 10, py + 125);
+  ctx.fillStyle = '#39ff14'; ctx.font = 'bold 14px "SpaceGrotesk"'; ctx.fillText('WEST', px + 160, py + 120);
 
-  ctx.fillStyle = brick.shadow;
-  for(let bx=0; bx<220; bx+=8) {
-    for(let by=0; by<80; by+=4) {
-      if((bx+by)%3===0) ctx.fillRect(px + bx, py + 40 + by, 4, 2);
+  // Chaotic Overlapping Roofs (Slum style)
+  for(let r=0; r<4; r++) {
+    const rw = rng.randInt(60, 120);
+    const rh = rng.randInt(50, 90);
+    const rx = px + rng.randInt(0, 120);
+    const ry = py + rng.randInt(0, 50);
+    
+    drawDropShadow(ctx, rx, ry, rw, rh, 8, 0.5);
+    const roofColor = rng.randChoice(['#4a4a4a', '#8f4f34', '#3d4045']);
+    ctx.fillStyle = roofColor; ctx.fillRect(rx, ry, rw, rh);
+    
+    // Corrugated lines
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1;
+    for(let lx=0; lx<rw; lx+=4) {
+      ctx.beginPath(); ctx.moveTo(rx+lx, ry); ctx.lineTo(rx+lx, ry+rh); ctx.stroke();
     }
   }
 
-  ctx.fillStyle = '#111'; ctx.fillRect(px + 80, py + 60, 60, 60);
-  ctx.fillStyle = '#222';
-  for(let gy=0; gy<60; gy+=6) ctx.fillRect(px + 80, py + 60 + gy, 60, 2);
-
-  ctx.fillStyle = '#ff3333'; ctx.font = 'bold 16px monospace'; ctx.fillText('MS-13', px + 10, py + 80);
-  ctx.fillStyle = '#39ff14'; ctx.font = 'bold 12px monospace'; ctx.fillText('WEST', px + 160, py + 70);
-
-  const conc = getPal(palConcrete, palConcreteNight, isNight);
-  drawPixelBlock(ctx, px - 10, py + 160, 250, 4, 16, conc);
-  ctx.fillStyle = '#555';
-  for(let wx = px - 10; wx < px + 240; wx += 8) {
-    ctx.fillRect(wx, py + 140, 2, 4); 
-    ctx.fillRect(wx, py + 142, 8, 1); 
-  }
-
-  drawCar(ctx, px + 20, py + 145, 'lowrider', '#3333aa', isNight);
-  drawCar(ctx, px + 140, py + 155, 'lowrider', '#8b2b22', isNight);
-  drawPole(ctx, px - 10, py + 145, isNight);
-  drawPole(ctx, px + 230, py + 145, isNight);
+  // Central Courtyard / Hangout
+  ctx.fillStyle = '#111'; ctx.fillRect(px + 80, py + 60, 60, 40);
+  
+  drawCarTopDown(ctx, px + 40, py + 160, 'lowrider', '#3333aa', 0, false, rng);
+  drawCarTopDown(ctx, px + 160, py + 170, 'lowrider', '#8b2b22', Math.PI/16, false, rng);
 }
 
 // ---- 5. ROOSTER FIGHTING PIT (Michoacán/Sinaloa) ----
-function drawRoosterPit(ctx, px, py, isNight, rng) {
-  const wood = getPal(palWood, palWoodNight, isNight);
-  const concrete = getPal(palConcrete, palConcreteNight, isNight);
+function drawRoosterPit(ctx, px, py, env, rng) {
+  // Organic Dirt Ground Clearing (prevents overlapping adjacent buildings harshly)
+  const clearingRadiusX = 170;
+  const clearingRadiusY = 110;
+  drawDropShadow(ctx, px + 150 - clearingRadiusX, py + 100 - clearingRadiusY, clearingRadiusX * 2, clearingRadiusY * 2, 25, 0.4);
   
-  fillDither(ctx, px - 20, py - 20, 240, 220, isNight ? '#1e1a14' : '#8b7050', isNight ? '#14110d' : '#735a3d');
+  // Use dithered organic polygon for the clearing base
+  const clearingPts = [];
+  for(let i=0; i<16; i++) {
+    const a = (Math.PI*2/16)*i;
+    const rX = clearingRadiusX * (0.9 + rng.rand()*0.2);
+    const rY = clearingRadiusY * (0.9 + rng.rand()*0.2);
+    clearingPts.push({x: Math.cos(a)*rX, y: Math.sin(a)*rY});
+  }
+  drawPolygon(ctx, px + 150, py + 100, clearingPts, '#1f150e');
+  applyGrit(ctx, px + 150 - clearingRadiusX, py + 100 - clearingRadiusY, clearingRadiusX*2, clearingRadiusY*2, 0.15, '#140d09', rng);
 
-  drawCar(ctx, px + 10, py + 180, 'pickup', '#8b2b22', isNight);
-  drawCar(ctx, px + 80, py + 190, 'sedan', '#2a4020', isNight);
-  drawCar(ctx, px + 150, py + 175, 'pickup', '#c9a444', isNight);
-  drawPole(ctx, px - 10, py + 180, isNight);
-  drawPole(ctx, px + 210, py + 180, isNight);
-
-  const cx = px + 120;
+  // THE BUILDING (Left side)
+  const cx = px + 80;
   const cy = py + 100;
-  
-  drawPixelBlock(ctx, cx - 60, cy - 20, 120, 30, 20, wood);
-  drawPixelBlock(ctx, cx - 50, cy - 10, 100, 30, 10, wood);
 
-  drawPixelBlock(ctx, cx - 40, cy + 45, 80, 80, 5, concrete);
-  fillDither(ctx, cx - 35, cy - 35, 70, 70, isNight ? '#261c14' : '#735a3d', isNight ? '#1f150e' : '#5c452b');
-  
-  ctx.fillStyle = '#591611';
-  ctx.fillRect(cx - 10, cy - 5, 8, 4); ctx.fillRect(cx + 15, cy + 10, 4, 4);
+  drawDropShadow(ctx, cx - 70, cy - 20, 140, 100, 15, 0.7);
+  // Wood walls
+  const wallGrad = ctx.createLinearGradient(cx - 70, cy + 60, cx - 70, cy + 80);
+  wallGrad.addColorStop(0, '#6e4b2a'); wallGrad.addColorStop(1, '#261c14');
+  ctx.fillStyle = wallGrad; ctx.fillRect(cx - 70, cy + 60, 140, 20);
 
-  drawPixelBlock(ctx, cx - 50, cy + 80, 100, 30, 10, wood);
-  drawPixelBlock(ctx, cx - 60, cy + 110, 120, 30, 20, wood);
-
-  drawPixelBlock(ctx, cx - 60, cy + 50, 20, 60, 20, wood);
-  drawPixelBlock(ctx, cx + 40, cy + 50, 20, 60, 20, wood);
-
-  ctx.fillStyle = '#111';
-  ctx.fillRect(cx - 75, cy - 70, 4, 100); ctx.fillRect(cx + 71, cy - 70, 4, 100);
-  ctx.fillRect(cx - 75, cy + 50, 4, 100); ctx.fillRect(cx + 71, cy + 50, 4, 100);
-
-  const roof = { top: isNight ? '#2e3136' : '#8c8a86', front: isNight ? '#1a1c1f' : '#5c5b59', highlight: isNight ? '#4a4e54' : '#b8b5b0', shadow: isNight ? '#0d0f11' : '#3d3c3a' };
-  drawPixelBlock(ctx, cx - 80, cy + 90, 160, 160, 10, roof);
-  
-  ctx.fillStyle = roof.shadow;
-  for(let x = cx - 78; x < cx + 78; x += 4) {
-    ctx.fillRect(x, cy - 80, 2, 160);
+  // Roof
+  ctx.fillStyle = '#3d3c3a'; ctx.fillRect(cx - 70, cy - 60, 140, 120);
+  ctx.strokeStyle = '#141414'; ctx.lineWidth = 2;
+  for (let x = cx - 68; x < cx + 68; x += 6) {
+    ctx.beginPath(); ctx.moveTo(x, cy - 60); ctx.lineTo(x, cy + 60); ctx.stroke();
   }
 
-  drawPixelBlock(ctx, cx - 40, cy + 130, 80, 10, 20, wood);
-  ctx.fillStyle = '#000'; ctx.fillRect(cx - 38, cy + 112, 76, 16);
-  ctx.fillStyle = '#e8c860'; ctx.font = 'bold 12px monospace';
-  ctx.fillText('PELEAS', cx - 22, cy + 124);
+  // Entrance sign
+  ctx.fillStyle = '#000'; ctx.fillRect(cx - 28, cy + 65, 56, 12);
+  ctx.fillStyle = '#e8c860'; ctx.font = 'bold 10px monospace';
+  ctx.fillText('PELEAS', cx - 20, cy + 74);
 
-  if (isNight) {
-    ctx.fillStyle = '#39ff14'; ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 10;
-    ctx.fillRect(cx - 20, cy - 95, 40, 15);
-    ctx.fillStyle = '#000'; ctx.shadowBlur = 0;
-    ctx.fillRect(cx - 18, cy - 93, 36, 11);
-    ctx.fillStyle = '#39ff14'; ctx.font = '9px monospace';
-    ctx.fillText('CERVEZA', cx - 16, cy - 84);
+  // THE FIGHTING CIRCLE (Outside, right side)
+  const pitX = px + 240;
+  const pitY = py + 100;
+  
+  // Dirt Ring (Perfect Circle in top-down)
+  drawDropShadow(ctx, pitX - 55, pitY - 55, 110, 110, 10, 0.5);
+  ctx.fillStyle = '#1a110a';
+  ctx.beginPath(); ctx.arc(pitX, pitY, 55, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#4a321f';
+  ctx.beginPath(); ctx.arc(pitX, pitY, 50, 0, Math.PI * 2); ctx.fill();
+  
+  // Grit and Blood splatters (High-res organic paths)
+  applyGrit(ctx, pitX - 40, pitY - 40, 80, 80, 0.3, '#1f130b', rng);
+  
+  const drawBlood = (bx, by, size) => {
+    const pts = [];
+    for(let i=0; i<6; i++) {
+      const a = (Math.PI*2/6)*i;
+      const r = size + rng.rand()*size*0.5;
+      pts.push({x: Math.cos(a)*r, y: Math.sin(a)*r});
+    }
+    drawPolygon(ctx, pitX+bx, pitY+by, pts, '#591611');
+  };
+  
+  drawBlood(-10, -5, 6);
+  drawBlood(15, 10, 4);
+  drawBlood(5, -15, 8);
+
+  // Pit Fence
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(pitX, pitY, 52, 0, Math.PI * 2); ctx.stroke();
+  for(let a=0; a<Math.PI*2; a+=0.3) {
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(pitX + Math.cos(a)*52, pitY + Math.sin(a)*52, 3, 0, Math.PI*2); ctx.fill();
   }
+
+  // Parked cars scattered around the pit at realistic angles
+  drawCarTopDown(ctx, pitX - 60, pitY - 60, 'pickup', '#8b2b22', Math.PI/4, false, rng);
+  drawCarTopDown(ctx, pitX + 30, pitY - 70, 'sedan', '#2a4020', Math.PI/2 + 0.2, false, rng);
+  drawCarTopDown(ctx, pitX + 70, pitY + 20, 'pickup', '#c9a444', Math.PI, false, rng);
+  drawCarTopDown(ctx, pitX - 40, pitY + 70, 'lowrider', '#111', -Math.PI/4, false, rng);
 }
-`;;
+`;
